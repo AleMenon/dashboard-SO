@@ -35,33 +35,52 @@ def cpu_data_collector():
 
 
 def memory_data_collector():
+    # Declaração dos dicionários
     memory_info = {}
     memory_data_processed = {}
+    memory_percent_processed = {}
+
+    # Manuseio do arquivo meminfo
     with open("/proc/meminfo", "r") as file:
         for line in file:
             key, value = line.split(":")
             memory_info[key.strip()] = int(value.strip().split()[0])
 
-    total_memory = memory_data_processed["total_memory"] = memory_info["MemTotal"]
-    free_memory = memory_data_processed["free_memory"] = (
+    # Memória física
+    total_memory = memory_info["MemTotal"]
+    free_memory = (
         memory_info["MemFree"] + memory_info["Buffers"] + memory_info["Cached"]
     )
-    used_memory = memory_data_processed["used_memory"] = total_memory - free_memory
+    used_memory = total_memory - free_memory
 
-    total_swap = memory_data_processed["total_swap"] = memory_info["SwapTotal"]
-    free_swap = memory_data_processed["free_swap"] = memory_info["SwapFree"]
-    used_swap = memory_data_processed["used_swap"] = total_swap - free_swap
+    # Memória swap
+    total_swap = memory_info["SwapTotal"]
+    free_swap = memory_info["SwapFree"]
+    used_swap = total_swap - free_swap
 
-    memory_data_processed["memory_usage_percent"] = (used_memory / total_memory) * 100
-    memory_data_processed["memory_free_percent"] = (
-        100 - memory_data_processed["memory_usage_percent"]
-    )
+    # Memória virtual = RAM + Swap
+    total_vmem = total_memory + total_swap
+    used_vmem = used_memory + used_swap
 
-    memory_data_processed["swap_usage_percent"] = (
-        (used_swap / total_swap) * 100 if total_swap > 0 else 0
-    )
+    # Porcentagens
+    memory_usage_percent = (used_memory / total_memory) * 100
+    memory_free_percent = 100 - memory_usage_percent
 
-    return memory_data_processed
+    vmem_usage_percent = (used_vmem / total_vmem) * 100 if total_vmem > 0 else 0
+    vmem_free_percent = 100 - vmem_usage_percent
+
+    # Dicionário com as quantidades de cada memória
+    memory_data_processed["total_memory"] = total_memory
+    memory_data_processed["total_swap"] = total_swap
+    memory_data_processed["total_vmem"] = total_vmem
+
+    # Dicionário com as porcentagens de uso das memórias
+    memory_percent_processed["memory_usage_percent"] = memory_usage_percent
+    memory_percent_processed["memory_free_percent"] = memory_free_percent
+    memory_percent_processed["vmem_usage_percent"] = vmem_usage_percent
+    memory_percent_processed["vmem_free_percent"] = vmem_free_percent
+
+    return memory_data_processed, memory_percent_processed
 
 
 """
@@ -75,5 +94,5 @@ def processes_data_collector():
             try:
                 with open(os.path.join(process_directory, "status")) as file:
 
-            
+
 """
