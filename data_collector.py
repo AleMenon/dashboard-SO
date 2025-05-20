@@ -93,6 +93,4 @@ def processes_data_collector():
 
             try:
                 with open(os.path.join(process_directory, "status")) as file:
-
-
 """
