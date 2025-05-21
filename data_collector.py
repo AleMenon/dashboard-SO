@@ -13,8 +13,6 @@ Lê os dados da CPU a partir do arquivo /proc/stat.
 Returns:
     list: Inteiros.
 """
-
-
 def cpu_file_reader():
     with open("/proc/stat", "r") as file:
         cpu_time = (file.readline()).split()[1:]
@@ -27,8 +25,6 @@ Lê todos os dados sobre a memória a partir do arquivo /proc/meminfo.
 Returns:
     memory_info: (key, data), String e inteiro respectivamente.
 """
-
-
 def memory_file_reader():
     memory_info = {}
 
@@ -46,8 +42,6 @@ Lê informações estáticas da CPU a partir do arquivo /proc/cpuinfo.
 Returns:
     cpu_model_name: String com dados do modelo da cpu.
 """
-
-
 def cpu_data_collector():
     with open("/proc/cpuinfo", "r") as file:
         cpu_model_name = file.readlines()[4].split()[3:]
@@ -61,8 +55,6 @@ Filtra informações estáticas da memória.
 Returns:
     memory_data_processed: (type, data), String e inteiro respectivamente.
 """
-
-
 def memory_data_collector():
     memory_data_processed = {}
     memory_info = memory_file_reader()
@@ -86,8 +78,6 @@ Trata informações dinâmicas da CPU, como porcentagem de uso e tempo ocioso.
 Returns:
     cpu_percent_processed: (type, percent), String e float respectivamente.
 """
-
-
 def cpu_percent_collector():
     cpu_percent_processed = {}
 
@@ -125,17 +115,13 @@ Trata informações dinâmicas da memória, como memória usada, memória virtua
 Returns:
     memory_percent_processed: (type, percent), String e float respectivamente.
 """
-
-
 def memory_percent_collector():
     memory_percent_processed = {}
     memory_info = memory_file_reader()
 
     # Memória física
     total_memory = memory_info["MemTotal"]
-    free_memory = (
-        memory_info["MemFree"] + memory_info["Buffers"] + memory_info["Cached"]
-    )
+    free_memory = (memory_info["MemFree"] + memory_info["Buffers"] + memory_info["Cached"])
     used_memory = total_memory - free_memory
 
     # Memória swap
@@ -169,7 +155,5 @@ Conta o número de processos em andamento a partir do diretório /proc/.
 Returns:
     sum: Somatório do número de processos.
 """
-
-
 def process_count():
     return sum(1 for name in os.listdir("/proc/") if name.isdigit())
