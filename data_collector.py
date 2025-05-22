@@ -6,6 +6,8 @@ Esse módulo apresenta as funções de leitura e cálculo dos dados do SO a part
 
 import os
 import time
+import pwd
+import interface
 
 """
 Lê os dados da CPU a partir do arquivo /proc/stat.
@@ -157,3 +159,32 @@ Returns:
 """
 def process_count():
     return sum(1 for name in os.listdir("/proc/") if name.isdigit())
+
+"""
+Registra os processos com seus respectivos ID, nome e usuário
+
+Returns:
+    processes: Lista onde cada item é uma tupla com: (process_id, process_name, user)
+
+"""
+def processes_with_users():
+    processes = []
+
+    for process_id in os.listdir("/proc"):
+        if process_id.isdigit():
+            status_path = os.path.join("/proc", process_id, "status")
+            with open(status_path, "r") as file:
+                lines = file.readlines()
+                user_id_line = next(line for line in lines if line.startswith("Uid:"))
+                user_id = int(user_id_line.split()[1])  # UID real
+                user = pwd.getpwuid(user_id).pw_name
+
+                name_line = next(line for line in lines if line.startswith("Name:"))
+                proces_name = name_line.split()[1]
+
+                processes.append((process_id, proces_name, user))
+
+    return processes
+# tirar esse FOR depois**********************************************************************************************
+for process_id, name, user in processes_with_users():
+    print(f"Process ID: {process_id}\tName: {name}\tUser: {user}")
