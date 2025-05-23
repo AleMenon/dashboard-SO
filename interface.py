@@ -7,9 +7,9 @@ root = tk.Tk()
 root.title("Dashboard - Projeto A")
 
 # ========== Frame: Operation System ==========
-alert_frame = tk.Frame(root, bd=2, relief="groove", padx=10, pady=10)
-alert_frame.pack(side="top", fill="x")
-tk.Label(alert_frame, text="Operation System", font=("Arial", 16), fg="black").pack()
+op_frame = tk.Frame(root, bd=2, relief="groove", padx=10, pady=10)
+op_frame.pack(side="top", fill="x")
+tk.Label(op_frame, text="Operation System", font=("Arial", 16), fg="black").pack()
 
 # ========== Frame: Pie Chart ==========
 def pie_chart_memory(root, name, data_percent, x=0, y=0):
