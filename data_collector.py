@@ -7,7 +7,6 @@ Esse módulo apresenta as funções de leitura e cálculo dos dados do SO a part
 import os
 import time
 import pwd
-import interface
 
 """
 Lê os dados da CPU a partir do arquivo /proc/stat.
@@ -165,7 +164,6 @@ Registra os processos com seus respectivos ID, nome e usuário
 
 Returns:
     processes: Lista onde cada item é uma tupla com: (process_id, process_name, user)
-
 """
 def processes_with_users():
     processes = []
@@ -185,6 +183,3 @@ def processes_with_users():
                 processes.append((process_id, proces_name, user))
 
     return processes
-# tirar esse FOR depois**********************************************************************************************
-for process_id, name, user in processes_with_users():
-    print(f"Process ID: {process_id}\tName: {name}\tUser: {user}")
