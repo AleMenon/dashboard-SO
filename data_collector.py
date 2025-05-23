@@ -7,6 +7,7 @@ Esse módulo apresenta as funções de leitura e cálculo dos dados do SO a part
 import os
 import time
 import pwd
+#import interface
 
 """
 Lê os dados da CPU a partir do arquivo /proc/stat.
