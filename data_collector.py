@@ -4,9 +4,8 @@ data_collector.py
 Esse módulo apresenta as funções de leitura e cálculo dos dados do SO a partir do diretório /proc/ em sistemas Linux.
 """
 
-import os
 import time
-import pwd
+from pathlib import Path
 #import interface
 
 """
@@ -134,6 +133,7 @@ def memory_percent_collector():
     # Memória virtual = RAM + Swap
     total_vmem = total_memory + total_swap
     used_vmem = used_memory + used_swap
+    free_vmem = total_vmem - used_vmem
 
     # Porcentagens
     memory_usage_percent = (used_memory / total_memory) * 100
@@ -144,43 +144,79 @@ def memory_percent_collector():
 
     # Dicionário com as porcentagens de uso das memórias
     memory_percent_processed["memory_usage_percent"] = round(memory_usage_percent, 1)
+    memory_percent_processed["memory_usage"] = used_memory
     memory_percent_processed["memory_free_percent"] = round(memory_free_percent, 1)
+    memory_percent_processed["memory_free"] = free_memory
     memory_percent_processed["vmem_usage_percent"] = round(vmem_usage_percent, 1)
+    memory_percent_processed["vmem_usage"] = used_vmem
     memory_percent_processed["vmem_free_percent"] = round(vmem_free_percent, 1)
+    memory_percent_processed["vmem_free"] = free_vmem
 
     return memory_percent_processed
 
 
-"""
-Conta o número de processos em andamento a partir do diretório /proc/.
+def get_user_from_uid(uid):
+    with open("/etc/passwd", "r") as file:
+        passwd = file.readlines()
 
-Returns:
-    sum: Somatório do número de processos.
-"""
-def process_count():
-    return sum(1 for name in os.listdir("/proc/") if name.isdigit())
+    for line in passwd:
+        split = line.split(":")
+        if split[2] == uid:
+            return split[0]
+    return "unknown"
 
-"""
-Registra os processos com seus respectivos ID, nome e usuário
 
-Returns:
-    processes: Lista onde cada item é uma tupla com: (process_id, process_name, user)
-"""
-def processes_with_users():
-    processes = []
+def process_data_collector():
+    processes = [] 
+    path = Path("/proc")
 
-    for process_id in os.listdir("/proc"):
-        if process_id.isdigit():
-            status_path = os.path.join("/proc", process_id, "status")
-            with open(status_path, "r") as file:
-                lines = file.readlines()
-                user_id_line = next(line for line in lines if line.startswith("Uid:"))
-                user_id = int(user_id_line.split()[1])  # UID real
-                user = pwd.getpwuid(user_id).pw_name
+    for process_id in path.iterdir():
+        if process_id.is_dir() and process_id.name.isdigit():
+            process_data = {}
 
-                name_line = next(line for line in lines if line.startswith("Name:"))
-                proces_name = name_line.split()[1]
+            process_data["process_id"] = process_id.name
 
-                processes.append((process_id, proces_name, user))
+            try:
+                status_file = process_id / "status"
+                with open (status_file, "r") as file:
+                    status_lines = file.readlines()
+                
+                user_id_line = next(line for line in status_lines if line.startswith("Uid:"))
+                uid = user_id_line.split()[1]  
+                process_data["user"] = get_user_from_uid(uid)
 
-    return processes
+                for line in status_lines:
+                    key = line.split(':')[0]
+                    value = line.split(':')[1].strip()
+
+                    match key:
+                        case 'VmSize':
+                            process_data["vm_size"] = value
+                        case 'VmRSS':
+                            process_data["m_size"] = value
+                        case 'VmData':
+                            process_data["heap"] = value
+                        case 'VmStk':
+                            process_data["stack"] = value
+                        case 'VmExe':
+                            process_data["data"] = value
+
+                task_dir = process_id / "task"
+                if task_dir.exists():
+                    for thread_dir in task_dir.iterdir():
+                        thread_data = {}
+
+                        thread_data["id"] = thread_dir.name
+                        thread_status = thread_dir / "status"
+                        if thread_status.exists():
+                            with open(thread_status, "r") as file:
+                                name = file.readline()
+                            thread_data["name"] = name.split()[1]
+                    process_data["thread_data"] = thread_data
+
+                processes.append(process_data)
+
+                return processes
+
+            except Exception:
+                continue
