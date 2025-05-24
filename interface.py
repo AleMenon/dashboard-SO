@@ -3,7 +3,7 @@ from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-class DashboardApp:
+class Interface:
     def __init__(self, root):
         self.root = root
         self.root.title("Dashboard - Projeto A")
@@ -143,5 +143,5 @@ class DashboardApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = DashboardApp(root)
+    interface = Interface(root)
     root.mainloop()
