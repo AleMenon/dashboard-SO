@@ -1,18 +1,22 @@
 """
 data_collector.py
 
-Esse módulo apresenta as funções de leitura e cálculo dos dados do SO a partir do diretório /proc/ em sistemas Linux.
+Esse módulo apresenta a classe DataCollector que implementa métodos para leitura e cálculo dos dados do SO a partir do diretório /proc/ 
+em sistemas Linux.
 """
 
 import time
 from pathlib import Path
 #import interface
 
-
 class DataCollector:
+    # Construtor
     def __init__(self):
         pass
-
+    
+    ##########################
+    # COLETA DE DADOS DA CPU #
+    ##########################
 
     """
     Lê os dados da CPU a partir do arquivo /proc/stat.
@@ -21,63 +25,21 @@ class DataCollector:
         list: Inteiros.
     """
     def cpu_file_reader(self):
-        with open("/proc/stat", "r") as file:
+        with open('/proc/stat', 'r') as file:
             cpu_time = (file.readline()).split()[1:]
         return list(map(int, cpu_time))
-
-
-    """
-    Lê todos os dados sobre a memória a partir do arquivo /proc/meminfo.
-
-    Returns:
-        memory_info: (key, data), String e inteiro respectivamente.
-    """
-    def memory_file_reader(self):
-        memory_info = {}
-
-        with open("/proc/meminfo", "r") as file:
-            for line in file:
-                key, value = line.split(":")
-                memory_info[key.strip()] = int(value.strip().split()[0])
-
-        return memory_info
-
 
     """
     Lê informações estáticas da CPU a partir do arquivo /proc/cpuinfo.
 
     Returns:
-        cpu_model_name: String com dados do modelo da cpu.
+        cpu_model_name: String com dados do modelo da CPU.
     """
     def cpu_data_collector(self):
-        with open("/proc/cpuinfo", "r") as file:
+        with open('/proc/cpuinfo', 'r') as file:
             cpu_model_name = file.readlines()[4].split()[3:]
 
         return cpu_model_name
-
-
-    """
-    Filtra informações estáticas da memória.
-
-    Returns:
-        memory_data_processed: (type, data), String e inteiro respectivamente.
-    """
-    def memory_data_collector(self):
-        memory_data_processed = {}
-        memory_info = self.memory_file_reader()
-
-        # Separa informações úteis do dicionário inial
-        total_memory = memory_info["MemTotal"]
-        total_swap = memory_info["SwapTotal"]
-        total_vmem = total_memory + total_swap
-
-        # Adiciona as informações no dicionário final
-        memory_data_processed["total_memory"] = total_memory
-        memory_data_processed["total_swap"] = total_swap
-        memory_data_processed["total_vmem"] = total_vmem
-
-        return memory_data_processed
-
 
     """
     Trata informações dinâmicas da CPU, como porcentagem de uso e tempo ocioso.
@@ -110,11 +72,52 @@ class DataCollector:
         cpu_idle_percent = (idle_diff / total_diff) * 100
 
         # Dicionário com as porcentagens de uso da CPU
-        cpu_percent_processed["cpu_usage_percent"] = round(cpu_usage_percent, 1)
-        cpu_percent_processed["cpu_idle_percent"] = round(cpu_idle_percent, 1)
+        cpu_percent_processed['cpu_usage_percent'] = round(cpu_usage_percent, 1)
+        cpu_percent_processed['cpu_idle_percent'] = round(cpu_idle_percent, 1)
 
         return cpu_percent_processed
 
+    ##############################
+    # COLETA DE DADOS DA MEMÓRIA #
+    ##############################
+
+    """
+    Lê todos os dados sobre a memória a partir do arquivo /proc/meminfo.
+
+    Returns:
+        memory_info: (key, data), String e inteiro respectivamente.
+    """
+    def memory_file_reader(self):
+        memory_info = {}
+
+        with open('/proc/meminfo', 'r') as file:
+            for line in file:
+                key, value = line.split(':')
+                memory_info[key.strip()] = int(value.strip().split()[0])
+
+        return memory_info
+
+    """
+    Filtra informações estáticas da memória.
+
+    Returns:
+        memory_data_processed: (type, data), String e inteiro respectivamente.
+    """
+    def memory_data_collector(self):
+        memory_data_processed = {}
+        memory_info = self.memory_file_reader()
+
+        # Separa informações úteis do dicionário inicial
+        total_memory = memory_info['MemTotal']
+        total_swap = memory_info['SwapTotal']
+        total_vmem = total_memory + total_swap
+
+        # Adiciona as informações no dicionário final
+        memory_data_processed['total_memory'] = total_memory
+        memory_data_processed['total_swap'] = total_swap
+        memory_data_processed['total_vmem'] = total_vmem
+
+        return memory_data_processed
 
     """
     Trata informações dinâmicas da memória, como memória usada, memória virtual usada, etc.
@@ -127,13 +130,13 @@ class DataCollector:
         memory_info = self.memory_file_reader()
 
         # Memória física
-        total_memory = memory_info["MemTotal"]
-        free_memory = (memory_info["MemFree"] + memory_info["Buffers"] + memory_info["Cached"])
+        total_memory = memory_info['MemTotal']
+        free_memory = (memory_info['MemFree'] + memory_info['Buffers'] + memory_info['Cached'])
         used_memory = total_memory - free_memory
 
         # Memória swap
-        total_swap = memory_info["SwapTotal"]
-        free_swap = memory_info["SwapFree"]
+        total_swap = memory_info['SwapTotal']
+        free_swap = memory_info['SwapFree']
         used_swap = total_swap - free_swap
 
         # Memória virtual = RAM + Swap
@@ -149,77 +152,113 @@ class DataCollector:
         vmem_free_percent = 100 - vmem_usage_percent
 
         # Dicionário com as porcentagens de uso das memórias
-        memory_percent_processed["memory_usage_percent"] = round(memory_usage_percent, 1)
-        memory_percent_processed["memory_usage"] = used_memory
-        memory_percent_processed["memory_free_percent"] = round(memory_free_percent, 1)
-        memory_percent_processed["memory_free"] = free_memory
-        memory_percent_processed["vmem_usage_percent"] = round(vmem_usage_percent, 1)
-        memory_percent_processed["vmem_usage"] = used_vmem
-        memory_percent_processed["vmem_free_percent"] = round(vmem_free_percent, 1)
-        memory_percent_processed["vmem_free"] = free_vmem
+        memory_percent_processed['memory_usage_percent'] = round(memory_usage_percent, 1)
+        memory_percent_processed['memory_usage'] = used_memory
+        memory_percent_processed['memory_free_percent'] = round(memory_free_percent, 1)
+        memory_percent_processed['memory_free'] = free_memory
+        memory_percent_processed['vmem_usage_percent'] = round(vmem_usage_percent, 1)
+        memory_percent_processed['vmem_usage'] = used_vmem
+        memory_percent_processed['vmem_free_percent'] = round(vmem_free_percent, 1)
+        memory_percent_processed['vmem_free'] = free_vmem
 
         return memory_percent_processed
 
+    #################################
+    # COLETA DE DADOS DOS PROCESSOS #
+    #################################
 
+    """
+    Busca o usuário correspondente ao uid recebido por parâmetro no arquivo /etc/passwd.
+
+    Returns:
+        split[0]: String com o nome do usuário, se reconhecido.
+    """
     def get_user_from_uid(uid, self):
-        with open("/etc/passwd", "r") as file:
+        with open('/etc/passwd', 'r') as file:
             passwd = file.readlines()
 
+        # Verifica linha por linha em busca de um uid igual ao do parâmetro
         for line in passwd:
-            split = line.split(":")
+            split = line.split(':')
             if split[2] == uid:
                 return split[0]
-        return "unknown"
 
+        return 'unknown'
 
+    """
+    Coleta dados dos processos e Threads dos processos ativos na pasta /proc/.
+
+    Returns:
+        processes: (process_data, ..., process_data) Lista de dicionários, cada dicionário representando um processo com suas respectivas
+        informações. Dentro de cada dicionário, há uma lista (id, nome) com o id e nome de cada thread do respectivo processo.
+    """
     def process_data_collector(self):
         processes = [] 
-        path = Path("/proc")
+        path = Path('/proc')
 
+        # Itera nos diretórios e verifica se são processos
         for process_id in path.iterdir():
             if process_id.is_dir() and process_id.name.isdigit():
                 process_data = {}
 
-                process_data["process_id"] = process_id.name
+                # salva id do processo
+                process_data['process_id'] = process_id.name
 
+                # Bloco try para verificar se os processos ainda existem durante o acesso aos mesmos
                 try:
-                    status_file = process_id / "status"
-                    with open (status_file, "r") as file:
+                    status_file = process_id / 'status'
+
+                    # Leitura do arquivo status do processo
+                    with open (status_file, 'r') as file:
                         status_lines = file.readlines()
                     
-                    user_id_line = next(line for line in status_lines if line.startswith("Uid:"))
-                    uid = user_id_line.split()[1]  
-                    process_data["user"] = self.get_user_from_uid(uid)
+                    # Identificação do usuário dono do processo
+                    for line in status_lines:
+                        if line.startswith('Uid:'):
+                            uid = line.split()[1]
+                            process_data['user'] = self.get_user_from_uid(uid)
+                            break
 
+                    # Filtro de outros dados importantes
                     for line in status_lines:
                         key = line.split(':')[0]
                         value = line.split(':')[1].strip()
 
                         match key:
+                            # Tamanho da memória virtual
                             case 'VmSize':
-                                process_data["vm_size"] = value
+                                process_data['vm_size'] = value
+                            # Tamanho da memória física
                             case 'VmRSS':
-                                process_data["m_size"] = value
+                                process_data['m_size'] = value
+                            # Tamanho da heap
                             case 'VmData':
-                                process_data["heap"] = value
+                                process_data['heap'] = value
+                            # Tamanho da stack
                             case 'VmStk':
-                                process_data["stack"] = value
+                                process_data['stack'] = value
+                            #Tamanho do data
                             case 'VmExe':
-                                process_data["data"] = value
+                                process_data['data'] = value
 
-                    task_dir = process_id / "task"
+                    # Coleta de informação sobre as threads do processo
+                    task_dir = process_id / 'task'
+
                     if task_dir.exists():
                         for thread_dir in task_dir.iterdir():
-                            thread_data = {}
+                            thread_data = []
+                            thread_status = thread_dir / 'status'
 
-                            thread_data["id"] = thread_dir.name
-                            thread_status = thread_dir / "status"
+                            # Salva o id e o nome da thread em uma lista
                             if thread_status.exists():
-                                with open(thread_status, "r") as file:
+                                with open(thread_status, 'r') as file:
                                     name = file.readline()
-                                thread_data["name"] = name.split()[1]
-                        process_data["thread_data"] = thread_data
+                                thread_data.append(thread_dir.name +' '+name.split([1]))
 
+                        # Adiciona a lista de threads no dicionário do processo
+                        process_data['thread_data'] = thread_data
+
+                    # Adiciona o processo em uma lista
                     processes.append(process_data)
 
 
