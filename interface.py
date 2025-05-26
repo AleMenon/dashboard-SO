@@ -96,11 +96,11 @@ class Interface:
         tree.column("Percent", width=200, anchor="center")
 
         rows = [
-            ("Total Memory", memory_data["memory_total"], "X"),
+            ("Total Memory", memory_data["memory_total"], "100.0"),
             ("Free Memory", memory_data["memory_free"], memory_data["memory_free_percent"]),
             ("Used Memory", memory_data["memory_usage"], memory_data["memory_usage_percent"]),
-            ("Total Swap", memory_data["swap_total"], "X"),
-            ("Total Virtual Memory", memory_data["vmem_total"], "X"),
+            ("Total Swap", memory_data["swap_total"], "100.0"),
+            ("Total Virtual Memory", memory_data["vmem_total"], "100.0"),
             ("Free Virtual Memory", memory_data["vmem_free"], memory_data["vmem_free_percent"]),
         ]
 
@@ -136,7 +136,7 @@ class Interface:
 
         tree.pack()
 
-    def show_process_table(self, process_data):
+    def show_process_table(self, processes_data):
         table_frame = tk.Frame(self.root, width=900, height=300, bg="#dcdcdc")
         table_frame.place(x=80, y=600)
 
@@ -148,23 +148,48 @@ class Interface:
         scrollbar = tk.Scrollbar(inner_frame)
         scrollbar.pack(side="right", fill="y")
 
-        columns = ("Process ID", "Name", "User", "CPU Used", "Memory Used", "Number of Threads")
+        columns = (
+            "Process ID", "Name", "User", "CPU Used", "Memory Used",
+            "Virtual Memory Used", "Stack", "Heap", "Data", "Number of Threads"
+        )
+
+        # Defina as larguras individualmente aqui
+        column_widths = {
+            "Process ID": 100,
+            "Name": 300,
+            "User": 120,
+            "CPU Used": 130,
+            "Memory Used": 160,
+            "Virtual Memory Used": 270,
+            "Stack": 100,
+            "Heap": 100,
+            "Data": 100,
+            "Number of Threads": 270
+        }
+
         tree = ttk.Treeview(inner_frame, columns=columns, show='headings', yscrollcommand=scrollbar.set)
 
         for col in columns:
             tree.heading(col, text=col.upper())
-            tree.column(col, width=270)
+            tree.column(col, width=column_widths.get(col, 100), anchor="w")  # "w" alinha à esquerda
 
         tree.pack(fill="both", expand=True)
         scrollbar.config(command=tree.yview)
 
-
-        data = []
+        # Popula a tabela
         for process in processes_data:
-            data.append((process["process_id"], "Name", process["user"], "CPU Used", process["m_size"], process["thread_data"]))
-
-        for row in data:
-            tree.insert("", "end", values=row)
+            tree.insert("", "end", values=(
+                process["process_id"],
+                process["name"],
+                process["user"],
+                "CPU Used",  # Troque se necessário por um valor real
+                process["m_size"],
+                process["vm_size"],
+                process["stack"],
+                process["heap"],
+                process["data"],
+                process["n_threads"]
+            ))
 
 
 if __name__ == "__main__":

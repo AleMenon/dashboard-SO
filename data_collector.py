@@ -222,6 +222,9 @@ class DataCollector:
                             process_data['user'] = self.get_user_from_uid(uid)
                             break
 
+                        if line.startswith('Name:'):
+                            process_data['name'] = line.split()[1]
+
                     process_data['vm_size'] = "-"
                     process_data['m_size'] = "-"
                     process_data['heap'] = "-"
@@ -230,15 +233,10 @@ class DataCollector:
 
                     # Filtro de outros dados importantes
                     for line in status_lines:
-                        if ':' in line:
-                            key = line.split(':')[0]
-                            value = line.split(':')[1].strip()
-                        else:
-                            continue
-                        """
+
                         key = line.split(':')[0]
                         value = line.split(':')[1].strip()
-                        """
+
 
 
                         match key:
@@ -275,13 +273,12 @@ class DataCollector:
                                 with open(thread_status, 'r') as file:
                                     name = file.readline().strip()
 
-                                name_parts = name.split()
-                                thread_name = name_parts[1] if len(name_parts) > 1 else 'Unknown'
-                                thread_data.append(f'{thread_dir.name} {thread_name}')
-                                #thread_data.append(thread_dir.name +' '+ name.split()[1])
+
+                                thread_data.append(thread_dir.name +' '+ name.split()[1])
 
                         # Adiciona a lista de threads no dicionário do processo
                         process_data['thread_data'] = thread_data
+                        process_data['n_threads'] = len(thread_data)
 
                     # Adiciona o processo em uma lista
                     processes.append(process_data)
