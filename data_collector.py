@@ -152,14 +152,17 @@ class DataCollector:
         vmem_free_percent = 100 - vmem_usage_percent
 
         # Dicionário com as porcentagens de uso das memórias
+        memory_percent_processed['memory_total'] = total_memory
         memory_percent_processed['memory_usage_percent'] = round(memory_usage_percent, 1)
         memory_percent_processed['memory_usage'] = used_memory
         memory_percent_processed['memory_free_percent'] = round(memory_free_percent, 1)
         memory_percent_processed['memory_free'] = free_memory
+        memory_percent_processed['vmem_total'] = total_vmem
         memory_percent_processed['vmem_usage_percent'] = round(vmem_usage_percent, 1)
         memory_percent_processed['vmem_usage'] = used_vmem
         memory_percent_processed['vmem_free_percent'] = round(vmem_free_percent, 1)
         memory_percent_processed['vmem_free'] = free_vmem
+        memory_percent_processed['swap_total'] = total_swap
 
         return memory_percent_processed
 
@@ -173,7 +176,7 @@ class DataCollector:
     Returns:
         split[0]: String com o nome do usuário, se reconhecido.
     """
-    def get_user_from_uid(uid, self):
+    def get_user_from_uid(self, uid):
         with open('/etc/passwd', 'r') as file:
             passwd = file.readlines()
 
@@ -193,7 +196,7 @@ class DataCollector:
         informações. Dentro de cada dicionário, há uma lista (id, nome) com o id e nome de cada thread do respectivo processo.
     """
     def process_data_collector(self):
-        processes = [] 
+        processes = []
         path = Path('/proc')
 
         # Itera nos diretórios e verifica se são processos
@@ -219,41 +222,63 @@ class DataCollector:
                             process_data['user'] = self.get_user_from_uid(uid)
                             break
 
+                    process_data['vm_size'] = "-"
+                    process_data['m_size'] = "-"
+                    process_data['heap'] = "-"
+                    process_data['stack'] = "-"
+                    process_data['data'] = "-"
+
                     # Filtro de outros dados importantes
                     for line in status_lines:
+                        if ':' in line:
+                            key = line.split(':')[0]
+                            value = line.split(':')[1].strip()
+                        else:
+                            continue
+                        """
                         key = line.split(':')[0]
                         value = line.split(':')[1].strip()
+                        """
+
 
                         match key:
                             # Tamanho da memória virtual
                             case 'VmSize':
                                 process_data['vm_size'] = value
+                                #print("vm_size" + " " + process_data["process_id"] + " " + process_data["vm_size"])
                             # Tamanho da memória física
                             case 'VmRSS':
                                 process_data['m_size'] = value
+                                #print("m_size" + " " + process_data["process_id"] + " " + process_data["m_size"])
                             # Tamanho da heap
                             case 'VmData':
                                 process_data['heap'] = value
+                                #print("heap" + " " + process_data["process_id"] + " " + process_data["heap"])
                             # Tamanho da stack
                             case 'VmStk':
                                 process_data['stack'] = value
+                                #print("stack" + " " + process_data["process_id"] + " " + process_data["stack"])
                             #Tamanho do data
                             case 'VmExe':
                                 process_data['data'] = value
-
-                    # Coleta de informação sobre as threads do processo
+                                #print("data" + " " + process_data["process_id"] + " " + process_data["data"])
+                    # Coleta de informação sofbre as threads do processo
                     task_dir = process_id / 'task'
 
                     if task_dir.exists():
+                        thread_data = []
                         for thread_dir in task_dir.iterdir():
-                            thread_data = []
                             thread_status = thread_dir / 'status'
 
                             # Salva o id e o nome da thread em uma lista
                             if thread_status.exists():
                                 with open(thread_status, 'r') as file:
-                                    name = file.readline()
-                                thread_data.append(thread_dir.name +' '+name.split([1]))
+                                    name = file.readline().strip()
+
+                                name_parts = name.split()
+                                thread_name = name_parts[1] if len(name_parts) > 1 else 'Unknown'
+                                thread_data.append(f'{thread_dir.name} {thread_name}')
+                                #thread_data.append(thread_dir.name +' '+ name.split()[1])
 
                         # Adiciona a lista de threads no dicionário do processo
                         process_data['thread_data'] = thread_data

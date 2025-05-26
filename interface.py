@@ -3,44 +3,82 @@ from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
+from data_collector import DataCollector
+
 class Interface:
-    def __init__(self, root):
+    def __init__(self, root, n_threads):
         self.root = root
         self.root.title("Dashboard - Projeto A")
         self.root.geometry("1800x700")
         self.root.configure(bg="#dcdcdc")
-
         self.create_op_frame()
-        self.show_process_table()
-        self.pie_chart_memory("Memory Status", 75.0, x=900, y=90)
-        self.pie_chart_memory("Virtual Memory Status", 35.0, x=1200, y=90)
-        self.pie_chart_memory("CPU Status", 75.0, x=1500, y=90)
-        self.show_memory_table()
-        self.show_process_and_threads_table()
+        collector = DataCollector()
+        self.show_process_table(collector.process_data_collector())
+        self.pie_chart_memory(collector.memory_percent_collector())
+        self.pie_chart_virtual_memory(collector.memory_percent_collector())
+        self.pie_chart_cpu(collector.cpu_percent_collector())
+        self.show_memory_table(collector.memory_percent_collector())
+        self.show_process_and_threads_table(collector.process_data_collector(), n_threads)
 
     def create_op_frame(self):
         op_frame = tk.Frame(self.root, bd=2, relief="groove", padx=10, pady=10)
         op_frame.pack(side="top", fill="x")
         tk.Label(op_frame, text="Operation System", font=("Arial", 16), fg="black").pack()
 
-    def pie_chart_memory(self, name, data_percent, x=0, y=0):
+    def pie_chart_memory(self, data_memory):
+        data_percent = data_memory["memory_free_percent"]
+
         chart_frame = tk.Frame(self.root)
-        chart_frame.place(x=x, y=y)
+        chart_frame.place(x=900, y=90)
 
         fig, ax = plt.subplots(figsize=(3.5, 3.5))
         labels = ['Free', 'Used']
         size_percent = [data_percent, 100.0 - data_percent]
         colors = ['green', 'red']
         ax.pie(size_percent, labels=labels, colors=colors, autopct='%1.1f%%')
-        ax.set_title(name)
+        ax.set_title("Memory Status")
 
         canvas = FigureCanvasTkAgg(fig, master=chart_frame)
         canvas.draw()
         canvas.get_tk_widget().pack()
 
-    def show_memory_table(self, x=80, y=90):
+    def pie_chart_virtual_memory(self, data_virtual_memory):
+        data_percent = data_virtual_memory["vmem_free_percent"]
+
+        chart_frame = tk.Frame(self.root)
+        chart_frame.place(x=1200, y=90)
+
+        fig, ax = plt.subplots(figsize=(3.5, 3.5))
+        labels = ['Free', 'Used']
+        size_percent = [data_percent, 100.0 - data_percent]
+        colors = ['green', 'red']
+        ax.pie(size_percent, labels=labels, colors=colors, autopct='%1.1f%%')
+        ax.set_title("Virtual Memory Status")
+
+        canvas = FigureCanvasTkAgg(fig, master=chart_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+    def pie_chart_cpu(self, data_cpu):
+        data_percent = data_cpu["cpu_idle_percent"]
+
+        chart_frame = tk.Frame(self.root)
+        chart_frame.place(x=1500, y=90)
+
+        fig, ax = plt.subplots(figsize=(3.5, 3.5))
+        labels = ['Free', 'Used']
+        size_percent = [data_percent, 100.0 - data_percent]
+        colors = ['green', 'red']
+        ax.pie(size_percent, labels=labels, colors=colors, autopct='%1.1f%%')
+        ax.set_title("CPU Status")
+
+        canvas = FigureCanvasTkAgg(fig, master=chart_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+    def show_memory_table(self, memory_data):
         memory_frame = tk.Frame(self.root, bg="#dcdcdc")
-        memory_frame.place(x=x, y=y)
+        memory_frame.place(x=80, y=90)
 
         label = tk.Label(memory_frame, text="Memory Information", font=("Arial", 14, "bold"), bg="#dcdcdc")
         label.grid(row=0, column=0, pady=(0, 5), sticky="w")
@@ -58,12 +96,12 @@ class Interface:
         tree.column("Percent", width=200, anchor="center")
 
         rows = [
-            ("Total Memory", "X KB", "X"),
-            ("Free Memory", "X KB", "X"),
-            ("Used Memory", "X KB", "X"),
-            ("Total Swap", "X KB", "X"),
-            ("Total Virtual Memory", "X KB", "X"),
-            ("Free Virtual Memory", "X KB", "X"),
+            ("Total Memory", memory_data["memory_total"], "X"),
+            ("Free Memory", memory_data["memory_free"], memory_data["memory_free_percent"]),
+            ("Used Memory", memory_data["memory_usage"], memory_data["memory_usage_percent"]),
+            ("Total Swap", memory_data["swap_total"], "X"),
+            ("Total Virtual Memory", memory_data["vmem_total"], "X"),
+            ("Free Virtual Memory", memory_data["vmem_free"], memory_data["vmem_free_percent"]),
         ]
 
         for row in rows:
@@ -72,9 +110,9 @@ class Interface:
         memory_frame.update_idletasks()
         memory_frame.config(height=tree.winfo_height() + label.winfo_height())
 
-    def show_process_and_threads_table(self, x=80, y=300):
+    def show_process_and_threads_table(self, process_threads_data, n_threads):
         table_frame = tk.Frame(self.root, bg="#dcdcdc")
-        table_frame.place(x=x, y=y)
+        table_frame.place(x=80, y=300)
 
         label = tk.Label(table_frame, text="Process X Threads", font=("Arial", 14, "bold"), bg="#dcdcdc")
         label.pack(anchor="w", pady=(0, 5))
@@ -89,8 +127,8 @@ class Interface:
         tree.column("Numbers", width=200, anchor="center")
 
         rows = [
-            ("Processes", "X"),
-            ("Threads", "X"),
+            ("Processes", len(process_threads_data)),
+            ("Threads", n_threads),
         ]
 
         for row in rows:
@@ -98,9 +136,9 @@ class Interface:
 
         tree.pack()
 
-    def show_process_table(self, x=80, y=600, width=900, height=300):
-        table_frame = tk.Frame(self.root, width=width, height=height, bg="#dcdcdc")
-        table_frame.place(x=x, y=y)
+    def show_process_table(self, process_data):
+        table_frame = tk.Frame(self.root, width=900, height=300, bg="#dcdcdc")
+        table_frame.place(x=80, y=600)
 
         tk.Label(table_frame, text="Processes Information", font=("Arial", 12, "bold"), bg="#dcdcdc").pack(pady=(10, 5))
 
@@ -120,22 +158,10 @@ class Interface:
         tree.pack(fill="both", expand=True)
         scrollbar.config(command=tree.yview)
 
-        data = [
-            ("Process ID", "Name1", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name2", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name3", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name4", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name5", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name6", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name7", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name8", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name9", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name10", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name11", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name12", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name13", "User", "CPU Used", "Memory Used", "Number of Threads"),
-            ("Process ID", "Name14", "User", "CPU Used", "Memory Used", "Number of Threads"),
-        ]
+
+        data = []
+        for process in processes_data:
+            data.append((process["process_id"], "Name", process["user"], "CPU Used", process["m_size"], process["thread_data"]))
 
         for row in data:
             tree.insert("", "end", values=row)
@@ -143,5 +169,12 @@ class Interface:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    interface = Interface(root)
+    collector = DataCollector()
+    processes_data = collector.process_data_collector()
+    n_threads = 0
+
+    # Número de threads
+    for process in processes_data:
+        n_threads += len(process['thread_data'])
+    interface = Interface(root, n_threads)
     root.mainloop()
