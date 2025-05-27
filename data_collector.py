@@ -106,15 +106,15 @@ class DataCollector:
     def memory_data_collector(self):
         memory_data_processed = {}
         memory_info = self.memory_file_reader()
+        conversion_factor = 1048576
 
         # Separa informações úteis do dicionário inicial
-        total_memory = memory_info['MemTotal']
-        total_swap = memory_info['SwapTotal']
+        total_memory = round(memory_info['MemTotal'] / conversion_factor, 2)
+        total_swap = round(memory_info['SwapTotal'] / conversion_factor, 2)
         total_vmem = total_memory + total_swap
 
         # Adiciona as informações no dicionário final
         memory_data_processed['total_memory'] = total_memory
-        memory_data_processed['total_swap'] = total_swap
         memory_data_processed['total_vmem'] = total_vmem
 
         return memory_data_processed
@@ -126,6 +126,7 @@ class DataCollector:
         memory_percent_processed: (type, percent), String e float respectivamente.
     """
     def memory_percent_collector(self):
+        conversion_factor = 1048576
         memory_percent_processed = {}
         memory_info = self.memory_file_reader()
 
@@ -154,14 +155,14 @@ class DataCollector:
         # Dicionário com as porcentagens de uso das memórias
         memory_percent_processed['memory_total'] = total_memory
         memory_percent_processed['memory_usage_percent'] = round(memory_usage_percent, 1)
-        memory_percent_processed['memory_usage'] = used_memory
+        memory_percent_processed['memory_usage'] = round(used_memory / conversion_factor, 2)
         memory_percent_processed['memory_free_percent'] = round(memory_free_percent, 1)
-        memory_percent_processed['memory_free'] = free_memory
+        memory_percent_processed['memory_free'] = round(free_memory / conversion_factor, 2)
         memory_percent_processed['vmem_total'] = total_vmem
         memory_percent_processed['vmem_usage_percent'] = round(vmem_usage_percent, 1)
-        memory_percent_processed['vmem_usage'] = used_vmem
+        memory_percent_processed['vmem_usage'] = round(used_vmem / conversion_factor, 2)
         memory_percent_processed['vmem_free_percent'] = round(vmem_free_percent, 1)
-        memory_percent_processed['vmem_free'] = free_vmem
+        memory_percent_processed['vmem_free'] = round(free_vmem / conversion_factor, 2)
         memory_percent_processed['swap_total'] = total_swap
 
         return memory_percent_processed
@@ -237,29 +238,22 @@ class DataCollector:
                         key = line.split(':')[0]
                         value = line.split(':')[1].strip()
 
-
-
                         match key:
                             # Tamanho da memória virtual
                             case 'VmSize':
-                                process_data['vm_size'] = value
-                                #print("vm_size" + " " + process_data["process_id"] + " " + process_data["vm_size"])
+                                process_data['vm_size'] = value 
                             # Tamanho da memória física
                             case 'VmRSS':
                                 process_data['m_size'] = value
-                                #print("m_size" + " " + process_data["process_id"] + " " + process_data["m_size"])
                             # Tamanho da heap
                             case 'VmData':
                                 process_data['heap'] = value
-                                #print("heap" + " " + process_data["process_id"] + " " + process_data["heap"])
                             # Tamanho da stack
                             case 'VmStk':
                                 process_data['stack'] = value
-                                #print("stack" + " " + process_data["process_id"] + " " + process_data["stack"])
                             #Tamanho do data
                             case 'VmExe':
                                 process_data['data'] = value
-                                #print("data" + " " + process_data["process_id"] + " " + process_data["data"])
                     # Coleta de informação sofbre as threads do processo
                     task_dir = process_id / 'task'
 
@@ -287,4 +281,8 @@ class DataCollector:
                 except Exception:
                     continue
 
-        return processes
+        n_threads = 0
+        for process in processes:
+            n_threads += len(process['thread_data'])
+
+        return processes, n_threads

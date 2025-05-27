@@ -18,14 +18,7 @@ if __name__ == "__main__":
     # Inicialização das classes
     data_collector = DataCollector()
 
-    processes_data = data_collector.process_data_collector()
-    n_threads = 0
-
-    # Número de threads
-    for process in processes_data:
-        n_threads += len(process['thread_data'])
-
-    interface = Interface(root, n_threads)
+    interface = Interface(root)
     controller = Controller(data_collector, interface, root)
 
     controller.start()

@@ -23,23 +23,16 @@ class Controller:
         NULL.
     """
     def setup(self):
-        memory_static_data = self.data_collector.memory_data_collector()
-        conversion_factor = 1048576
-        
-        # Conversão de dados da memória de kb para gb
-        memory_static_data['total_memory'] = memory_static_data['total_memory'] / conversion_factor
-        memory_static_data['total_vmem'] = memory_static_data['total_vmem'] / conversion_factor
 
-        #######################################################################
-        # Atualiza dados estáticos logo no início (ex.: total de memória)     #
-        #######################################################################
-        # Aqui tem que ser chamado um método para coletar os dados            #
-        # estáticos da memória e da cpu, e envio para a interface. Exemplo de #
-        # implementação abaixo.                                               #
-        # P.S.: Não precisa ser necessariamente esse nome para o método na    #
-        # interface.                                                          #
-        #######################################################################
-        self.interface.update_static_data(memory_static_data, self.data_collector.cpu_data_collector())
+        process_data = self.data_collector.process_data_collector()
+
+        # self.interface.update_static_data(self.data_collector.cpu_data_collector()) # Alterar nome do método depois
+        self.interface.show_process_table(process_data[0])
+        self.interface.pie_chart_memory(self.data_collector.memory_percent_collector())
+        self.interface.pie_chart_virtual_memory(self.data_collector.memory_percent_collector())
+        self.interface.pie_chart_cpu(self.data_collector.cpu_percent_collector())
+        self.interface.show_memory_table(self.data_collector.memory_percent_collector())
+        self.interface.show_process_and_threads_table(process_data[0], process_data[1])
 
     """
     Inicia a thread responsável por rodar o backend e a coleta de dados.
@@ -73,25 +66,9 @@ class Controller:
     def update_loop(self):
         while self.running:
             # Coleta os dados
-            conversion_factor = 1048576
             cpu_percent = self.data_collector.cpu_percent_collector()
             memory_percent = self.data_collector.memory_percent_collector()
             processes_data = self.data_collector.process_data_collector()
-
-            # Conversão dos dados da memória de kb para gb
-            memory_percent['memory_usage'] = memory_percent['memory_used'] / conversion_factor
-            memory_percent['memory_free'] = memory_percent['memory_free'] / conversion_factor
-            memory_percent['vmem_usage'] = memory_percent['vmem_usage'] / conversion_factor
-            memory_percent['vmem_free'] = memory_percent['vmem_free'] / conversion_factor
-
-            # Número de processos
-            n_processes = len(processes_data)
-
-            n_threads = 0
-
-            # Número de threads
-            for process in processes_data:
-                n_threads += len(process['thread_data'])
 
             ##################################################################
             # Envia os dados pra interface usando Tkinter (thread-safe)      #
@@ -107,9 +84,8 @@ class Controller:
             self.root.after(0, self.interface.update_data, {    
                 'cpu_percent': cpu_percent,
                 'memory_percent': memory_percent,
-                'process_data': processes_data,
-                'n_processes' : n_processes,
-                'n_threads' : n_threads,
+                'process_data': processes_data[0],
+                'n_threads' : processes_data[1],
             })
 
             # Espera 5 segundos pra próxima atualização

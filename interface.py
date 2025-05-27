@@ -6,19 +6,12 @@ import matplotlib.pyplot as plt
 from data_collector import DataCollector
 
 class Interface:
-    def __init__(self, root, n_threads):
+    def __init__(self, root):
         self.root = root
         self.root.title("Dashboard - Projeto A")
         self.root.geometry("1800x700")
         self.root.configure(bg="#dcdcdc")
         self.create_op_frame()
-        collector = DataCollector()
-        self.show_process_table(collector.process_data_collector())
-        self.pie_chart_memory(collector.memory_percent_collector())
-        self.pie_chart_virtual_memory(collector.memory_percent_collector())
-        self.pie_chart_cpu(collector.cpu_percent_collector())
-        self.show_memory_table(collector.memory_percent_collector())
-        self.show_process_and_threads_table(collector.process_data_collector(), n_threads)
 
     def create_op_frame(self):
         op_frame = tk.Frame(self.root, bd=2, relief="groove", padx=10, pady=10)
@@ -196,10 +189,9 @@ if __name__ == "__main__":
     root = tk.Tk()
     collector = DataCollector()
     processes_data = collector.process_data_collector()
-    n_threads = 0
 
     # Número de threads
-    for process in processes_data:
-        n_threads += len(process['thread_data'])
-    interface = Interface(root, n_threads)
+    #for process in processes_data:
+    #    n_threads += len(process['thread_data'])
+    interface = Interface(root)
     root.mainloop()
