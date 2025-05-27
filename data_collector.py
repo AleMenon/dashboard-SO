@@ -153,17 +153,14 @@ class DataCollector:
         vmem_free_percent = 100 - vmem_usage_percent
 
         # Dicionário com as porcentagens de uso das memórias
-        memory_percent_processed['memory_total'] = total_memory
         memory_percent_processed['memory_usage_percent'] = round(memory_usage_percent, 1)
         memory_percent_processed['memory_usage'] = round(used_memory / conversion_factor, 2)
         memory_percent_processed['memory_free_percent'] = round(memory_free_percent, 1)
         memory_percent_processed['memory_free'] = round(free_memory / conversion_factor, 2)
-        memory_percent_processed['vmem_total'] = total_vmem
         memory_percent_processed['vmem_usage_percent'] = round(vmem_usage_percent, 1)
         memory_percent_processed['vmem_usage'] = round(used_vmem / conversion_factor, 2)
         memory_percent_processed['vmem_free_percent'] = round(vmem_free_percent, 1)
         memory_percent_processed['vmem_free'] = round(free_vmem / conversion_factor, 2)
-        memory_percent_processed['swap_total'] = total_swap
 
         return memory_percent_processed
 

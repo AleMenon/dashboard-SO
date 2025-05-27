@@ -14,7 +14,11 @@ class Controller:
         self.interface = interface
         self.root = root  # Referência ao Tkinter root para usar after()
         self.running = False
-        self.thread = None
+
+        # Threads
+        self.cpu_thread = None
+        self.memory_thread = None
+        self.process_thread = None
 
     """
     Inicializa os dados estáticos na interface.
@@ -26,12 +30,12 @@ class Controller:
 
         process_data = self.data_collector.process_data_collector()
 
-        # self.interface.update_static_data(self.data_collector.cpu_data_collector()) # Alterar nome do método depois
+        self.interface.static_data_table(self.data_collector.memory_data_collector())
         self.interface.show_process_table(process_data[0])
         self.interface.pie_chart_memory(self.data_collector.memory_percent_collector())
         self.interface.pie_chart_virtual_memory(self.data_collector.memory_percent_collector())
         self.interface.pie_chart_cpu(self.data_collector.cpu_percent_collector())
-        self.interface.show_memory_table(self.data_collector.memory_percent_collector())
+        self.interface.dinamic_data_table(self.data_collector.memory_percent_collector())
         self.interface.show_process_and_threads_table(process_data[0], process_data[1])
 
     """
@@ -43,8 +47,18 @@ class Controller:
     def start(self):
         self.setup()
         self.running = True
-        self.thread = threading.Thread(target=self.update_loop, daemon=True)
-        self.thread.start()
+
+        # Start CPU thread
+        self.cpu_thread = threading.Thread(target=self.cpu_update_loop, daemon=True)
+        self.cpu_thread.start()
+
+        # Start Memory thread
+        self.memory_thread = threading.Thread(target=self.memory_update_loop, daemon=True)
+        self.memory_thread.start()
+
+        # Start Process thread
+        self.process_thread = threading.Thread(target=self.process_update_loop, daemon=True)
+        self.process_thread.start()
 
     """
     Resposável por encerrar a thread do backend.
@@ -54,8 +68,10 @@ class Controller:
     """
     def stop(self):
         self.running = False
-        if self.thread:
-            self.thread.join()
+
+        for thread in [self.cpu_thread, self.memory_thread, self.process_thread]:
+            if thread:
+                thread.join()
 
     """
     Método responsável por atualizar os dados na interface a cada 5 segundos.
@@ -63,30 +79,26 @@ class Controller:
     Returns:
         NULL.
     """
-    def update_loop(self):
+    def cpu_update_loop(self):
         while self.running:
-            # Coleta os dados
             cpu_percent = self.data_collector.cpu_percent_collector()
+
+            self.root.after(0, self.interface.update_data_cpu, cpu_percent)
+
+            time.sleep(5)
+
+    def memory_update_loop(self):
+        while self.running:
             memory_percent = self.data_collector.memory_percent_collector()
+
+            self.root.after(0, self.interface.update_data_memory, memory_percent)
+
+            time.sleep(5)
+
+    def process_update_loop(self):
+        while self.running:
             processes_data = self.data_collector.process_data_collector()
 
-            ##################################################################
-            # Envia os dados pra interface usando Tkinter (thread-safe)      #
-            ##################################################################
-            # Esse método after é fornecido pela biblioteca do tkinter:      #
-            #                                                                #
-            # after(delay_ms, callback, *args)                               #
-            #   delay_ms: Tempo em milissegundos antes de executar o método; #
-            #   callback: Função que é pra ser executada;                    #
-            #   *args: Argumento que é passado para a função                 #
-            ##################################################################
+            self.root.after(0, self.interface.update_data_process, processes_data[0], processes_data[1])
 
-            self.root.after(0, self.interface.update_data, {    
-                'cpu_percent': cpu_percent,
-                'memory_percent': memory_percent,
-                'process_data': processes_data[0],
-                'n_threads' : processes_data[1],
-            })
-
-            # Espera 5 segundos pra próxima atualização
-            time.sleep(5)  
+            time.sleep(5)
