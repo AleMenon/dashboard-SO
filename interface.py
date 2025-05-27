@@ -9,6 +9,13 @@ class Interface:
         self.root.title("Dashboard - Projeto A")
         self.root.geometry("1800x900")
         self.root.configure(bg="#dcdcdc")
+        self.cpu_chart_frame = None
+        self.memory_chart_frame = None
+        self.virtual_memory_chart_frame = None
+        self.memory_frame = None
+        self.static_data_frame = None
+        self.tablept_frame = None
+        self.tablep_frame = None
 
         # Configure the grid layout for the main window
         for i in range(3):
@@ -29,8 +36,11 @@ class Interface:
     def pie_chart_memory(self, data_memory):
         data_percent = data_memory["memory_free_percent"]
 
-        chart_frame = tk.Frame(self.root)
-        chart_frame.grid(row=1, column=2, padx=10, pady=10, sticky="nsew")
+        if self.memory_chart_frame is not None:
+            self.memory_chart_frame.destroy()
+
+        self.memory_chart_frame = tk.Frame(self.root)
+        self.memory_chart_frame.grid(row=1, column=2, padx=10, pady=10, sticky="nsew")
 
         fig, ax = plt.subplots(figsize=(3.5, 3.5))
         labels = ['Free', 'Used']
@@ -39,15 +49,18 @@ class Interface:
         ax.pie(size_percent, labels=labels, colors=colors, autopct='%1.1f%%')
         ax.set_title("Memory Status")
 
-        canvas = FigureCanvasTkAgg(fig, master=chart_frame)
+        canvas = FigureCanvasTkAgg(fig, master=self.memory_chart_frame)
         canvas.draw()
         canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
 
     def pie_chart_virtual_memory(self, data_virtual_memory):
         data_percent = data_virtual_memory["vmem_free_percent"]
 
-        chart_frame = tk.Frame(self.root)
-        chart_frame.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
+        if self.virtual_memory_chart_frame is not None:
+            self.virtual_memory_chart_frame.destroy()
+
+        self.virtual_memory_chart_frame = tk.Frame(self.root)
+        self.virtual_memory_chart_frame.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
         fig, ax = plt.subplots(figsize=(3.5, 3.5))
         labels = ['Free', 'Used']
@@ -56,15 +69,18 @@ class Interface:
         ax.pie(size_percent, labels=labels, colors=colors, autopct='%1.1f%%')
         ax.set_title("Virtual Memory Status")
 
-        canvas = FigureCanvasTkAgg(fig, master=chart_frame)
+        canvas = FigureCanvasTkAgg(fig, master=self.virtual_memory_chart_frame)
         canvas.draw()
         canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
 
     def pie_chart_cpu(self, data_cpu):
         data_percent = data_cpu["cpu_idle_percent"]
 
-        chart_frame = tk.Frame(self.root)
-        chart_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+        if self.cpu_chart_frame is not None:
+            self.cpu_chart_frame.destroy()
+
+        self.cpu_chart_frame = tk.Frame(self.root)
+        self.cpu_chart_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
         fig, ax = plt.subplots(figsize=(3.5, 3.5))
         labels = ['Free', 'Used']
@@ -73,11 +89,14 @@ class Interface:
         ax.pie(size_percent, labels=labels, colors=colors, autopct='%1.1f%%')
         ax.set_title("CPU Status")
 
-        canvas = FigureCanvasTkAgg(fig, master=chart_frame)
+        canvas = FigureCanvasTkAgg(fig, master=self.cpu_chart_frame)
         canvas.draw()
         canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
 
     def dinamic_data_table(self, memory_data):
+        if self.memory_frame is not None:
+            self.memory_frame.destroy()
+
         memory_frame = tk.Frame(self.root, bg="#dcdcdc")
         memory_frame.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
 
@@ -106,14 +125,17 @@ class Interface:
             tree.insert("", "end", values=row)
 
     def static_data_table(self, static_data):
-        table_frame = tk.Frame(self.root, bg="#dcdcdc")
-        table_frame.grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
+        if self.static_data_frame is not None:
+            self.static_data_frame.destroy()
 
-        label = tk.Label(table_frame, text="Static Data", font=("Arial", 14, "bold"), bg="#dcdcdc")
+        static_data_frame = tk.Frame(self.root, bg="#dcdcdc")
+        static_data_frame.grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
+
+        label = tk.Label(static_data_frame, text="Static Data", font=("Arial", 14, "bold"), bg="#dcdcdc")
         label.grid(row=0, column=0, pady=(0, 5), sticky="w")
 
         columns = ("Info", "Gb", "Percent")
-        tree = ttk.Treeview(table_frame, columns=columns, show='headings', height=2)
+        tree = ttk.Treeview(static_data_frame, columns=columns, show='headings', height=2)
         tree.grid(row=1, column=0, sticky="nsew")
 
         tree.heading("Info", text=" ")
@@ -133,14 +155,17 @@ class Interface:
             tree.insert("", "end", values=row)
 
     def show_process_and_threads_table(self, process_threads_data, n_threads):
-        table_frame = tk.Frame(self.root, bg="#dcdcdc")
-        table_frame.grid(row=2, column=2, padx=10, pady=10, sticky="nsew")
+        if self.tablept_frame is not None:
+            self.tablept_frame.destroy()
 
-        label = tk.Label(table_frame, text="Process X Threads", font=("Arial", 14, "bold"), bg="#dcdcdc")
+        self.tablept_frame = tk.Frame(self.root, bg="#dcdcdc")
+        self.tablept_frame.grid(row=2, column=2, padx=10, pady=10, sticky="nsew")
+
+        label = tk.Label(self.tablept_frame, text="Process X Threads", font=("Arial", 14, "bold"), bg="#dcdcdc")
         label.grid(row=0, column=0, pady=(0, 5), sticky="w")
 
         columns = ("Info", "Numbers")
-        tree = ttk.Treeview(table_frame, columns=columns, show='headings', height=2)
+        tree = ttk.Treeview(self.tablept_frame, columns=columns, show='headings', height=2)
         tree.grid(row=1, column=0, sticky="nsew")
 
         tree.heading("Info", text=" ")
@@ -158,13 +183,16 @@ class Interface:
             tree.insert("", "end", values=row)
 
     def show_process_table(self, processes_data):
-        table_frame = tk.Frame(self.root, bg="#dcdcdc")
-        table_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        if self.tablep_frame is not None:
+            self.tablep_frame.destroy()
 
-        label = tk.Label(table_frame, text="Processes Information", font=("Arial", 12, "bold"), bg="#dcdcdc")
+        self.tablep_frame = tk.Frame(self.root, bg="#dcdcdc")
+        self.tablep_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+
+        label = tk.Label(self.tablep_frame, text="Processes Information", font=("Arial", 12, "bold"), bg="#dcdcdc")
         label.grid(row=0, column=0, pady=(10, 5), sticky="w")
 
-        inner_frame = tk.Frame(table_frame)
+        inner_frame = tk.Frame(self.tablep_frame)
         inner_frame.grid(row=1, column=0, sticky="nsew")
 
         scrollbar = tk.Scrollbar(inner_frame)
