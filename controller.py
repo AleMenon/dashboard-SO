@@ -91,7 +91,7 @@ class Controller:
 
             self.root.after(0, self.interface.update_data_cpu, cpu_percent)
 
-            time.sleep(5)
+            time.sleep(1)
 
     def memory_update_loop(self):
         while self.running:
@@ -99,7 +99,7 @@ class Controller:
 
             self.root.after(0, self.interface.update_data_memory, memory_percent)
 
-            time.sleep(5)
+            time.sleep(1)
 
     def process_update_loop(self):
         while self.running:
@@ -107,4 +107,4 @@ class Controller:
 
             self.root.after(0, self.interface.update_data_process, processes_data[0], processes_data[1])
 
-            time.sleep(5)
+            time.sleep(1)
