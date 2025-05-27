@@ -13,7 +13,7 @@ class DataCollector:
     # Construtor
     def __init__(self):
         pass
-    
+
     ##########################
     # COLETA DE DADOS DA CPU #
     ##########################
@@ -212,7 +212,7 @@ class DataCollector:
                     # Leitura do arquivo status do processo
                     with open (status_file, 'r') as file:
                         status_lines = file.readlines()
-                    
+
                     # Identificação do usuário dono do processo
                     for line in status_lines:
                         if line.startswith('Uid:'):

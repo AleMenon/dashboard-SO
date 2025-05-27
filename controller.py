@@ -73,12 +73,7 @@ class Controller:
             if thread:
                 thread.join()
 
-    """
-    Método responsável por atualizar os dados na interface a cada 5 segundos.
 
-    Returns:
-        NULL.
-    """
     def cpu_update_loop(self):
         while self.running:
             cpu_percent = self.data_collector.cpu_percent_collector()
