@@ -3,16 +3,20 @@ controller.py
 
 Esse módulo é responsável por fazer a transferência de dados entre o data_collector e a interface.
 """
-
+import tkinter as tk
+from data_collector import DataCollector 
+from interface import Interface
 import threading
 import time
 
 class Controller:
     #Construtor
-    def __init__(self, data_collector, interface, root):
-        self.data_collector = data_collector
-        self.interface = interface
-        self.root = root  # Referência ao Tkinter root para usar after()
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+
+        self.data_collector = DataCollector()
+        self.interface = Interface(self.root)
         self.running = False
 
         # Threads
@@ -60,18 +64,25 @@ class Controller:
         self.process_thread = threading.Thread(target=self.process_update_loop, daemon=True)
         self.process_thread.start()
 
+        self.root.mainloop()
+
     """
     Resposável por encerrar a thread do backend.
 
     Returns:
         NULL.
     """
+    def on_close(self):
+        self.stop()
+        self.root.destroy()
+
     def stop(self):
         self.running = False
-
+        """
         for thread in [self.cpu_thread, self.memory_thread, self.process_thread]:
-            if thread:
-                thread.join()
+            if thread and thread.is_alive():
+                thread.join(timeout=6)
+        """
 
 
     def cpu_update_loop(self):
