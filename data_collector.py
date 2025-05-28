@@ -115,6 +115,7 @@ class DataCollector:
         # Adiciona as informações no dicionário final
         memory_data_processed['total_memory'] = total_memory
         memory_data_processed['total_vmem'] = total_vmem
+        memory_data_processed['total_swap'] = total_swap
 
         return memory_data_processed
 

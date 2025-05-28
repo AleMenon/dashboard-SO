@@ -133,7 +133,7 @@ class Interface:
             label.grid(row=0, column=0, pady=(0, 5), sticky="w")
 
             columns = ("Info", "Gb", "Porcentagem")
-            self.memory_tree = ttk.Treeview(self.memory_frame, columns=columns, show='headings', height=6)
+            self.memory_tree = ttk.Treeview(self.memory_frame, columns=columns, show='headings', height=3)
             self.memory_tree.grid(row=1, column=0, sticky="nsew")
 
             self.memory_tree.heading("Info", text=" ")
@@ -172,7 +172,7 @@ class Interface:
         label.grid(row=0, column=0, pady=(0, 5), sticky="w")
 
         columns = ("Info", "Gb", "Porcentagem")
-        tree = ttk.Treeview(static_data_frame, columns=columns, show='headings', height=2)
+        tree = ttk.Treeview(static_data_frame, columns=columns, show='headings', height=3)
         tree.grid(row=1, column=0, sticky="nsew")
 
         tree.heading("Info", text=" ")
@@ -186,6 +186,7 @@ class Interface:
         rows = [
             ("Memória Total", static_data["total_memory"], "100.0"),
             ("Memória Virtual Total", static_data["total_vmem"], "100.0"),
+            ("Swap Total", static_data["total_swap"], "100.0"),
         ]
 
         for row in rows:
