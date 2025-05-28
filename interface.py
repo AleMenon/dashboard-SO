@@ -3,8 +3,6 @@ from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-from data_collector import DataCollector
-
 class Interface:
     def __init__(self, root):
         self.root = root
@@ -239,7 +237,7 @@ class Interface:
             self.process_tree.pack(fill="both", expand=True)
             scrollbar.config(command=self.process_tree.yview)
 
-        # ⚠️ Este bloco atualiza os dados da tabela sem recriá-la
+        # Este bloco atualiza os dados da tabela sem recriá-la
         if self.process_tree is not None:
             # Limpa linhas antigas
             for item in self.process_tree.get_children():
@@ -270,8 +268,3 @@ class Interface:
     def update_data_process(self, process, n_threads):
         self.show_process_table(process)
         self.show_process_and_threads_table(process, n_threads)
-
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    interface = Interface(root)

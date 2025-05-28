@@ -3,6 +3,7 @@ controller.py
 
 Esse módulo é responsável por fazer a transferência de dados entre o data_collector e a interface.
 """
+
 import tkinter as tk
 from data_collector import DataCollector 
 from interface import Interface
@@ -13,7 +14,7 @@ class Controller:
     #Construtor
     def __init__(self):
         self.root = tk.Tk()
-        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.root.protocol("WM_DELETE_WINDOW", self.close)
 
         self.data_collector = DataCollector()
         self.interface = Interface(self.root)
@@ -34,6 +35,7 @@ class Controller:
 
         process_data = self.data_collector.process_data_collector()
 
+        # Construção da interface e inserção dos dados iniciais
         self.interface.static_data_table(self.data_collector.memory_data_collector())
         self.interface.show_process_table(process_data[0])
         self.interface.pie_chart_memory(self.data_collector.memory_percent_collector())
@@ -52,39 +54,36 @@ class Controller:
         self.setup()
         self.running = True
 
-        # Start CPU thread
+        # Criação e início da thread de CPU
         self.cpu_thread = threading.Thread(target=self.cpu_update_loop, daemon=True)
         self.cpu_thread.start()
 
-        # Start Memory thread
+        # Criação e início da thread de memória
         self.memory_thread = threading.Thread(target=self.memory_update_loop, daemon=True)
         self.memory_thread.start()
 
-        # Start Process thread
+        # Criação e início da thread de processos
         self.process_thread = threading.Thread(target=self.process_update_loop, daemon=True)
         self.process_thread.start()
 
         self.root.mainloop()
 
     """
-    Resposável por encerrar a thread do backend.
+    Resposável por encerrar a thread do backend e destruir a janela.
 
     Returns:
         NULL.
     """
-    def on_close(self):
-        self.stop()
+    def close(self):
+        self.running = False
         self.root.destroy()
 
-    def stop(self):
-        self.running = False
-        """
-        for thread in [self.cpu_thread, self.memory_thread, self.process_thread]:
-            if thread and thread.is_alive():
-                thread.join(timeout=6)
-        """
+    """
+    Método executado pela thread, responsável pela coleta de dados da CPU.
 
-
+    Returns:
+        NULL.
+    """
     def cpu_update_loop(self):
         while self.running:
             cpu_percent = self.data_collector.cpu_percent_collector()
@@ -93,6 +92,12 @@ class Controller:
 
             time.sleep(1)
 
+    """
+    Método executado pela thread, responsável pela coleta de dados da memória.
+
+    Returns:
+        NULL.
+    """
     def memory_update_loop(self):
         while self.running:
             memory_percent = self.data_collector.memory_percent_collector()
@@ -101,6 +106,12 @@ class Controller:
 
             time.sleep(1)
 
+    """
+    Método executado pela thread, responsável pela coleta de dados dos processos.
+
+    Returns:
+        NULL.
+    """
     def process_update_loop(self):
         while self.running:
             processes_data = self.data_collector.process_data_collector()

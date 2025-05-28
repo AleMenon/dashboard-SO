@@ -7,7 +7,6 @@ em sistemas Linux.
 
 import time
 from pathlib import Path
-#import interface
 
 class DataCollector:
     # Construtor
@@ -251,7 +250,8 @@ class DataCollector:
                             #Tamanho do data
                             case 'VmExe':
                                 process_data['data'] = value
-                    # Coleta de informação sofbre as threads do processo
+
+                    # Coleta de informação sobre as threads do processo
                     task_dir = process_id / 'task'
 
                     if task_dir.exists():
@@ -278,6 +278,7 @@ class DataCollector:
                 except Exception:
                     continue
 
+        # Itera pelos processos para saber o número total de threads
         n_threads = 0
         for process in processes:
             n_threads += len(process['thread_data'])
