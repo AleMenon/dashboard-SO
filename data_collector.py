@@ -5,13 +5,19 @@ Esse módulo apresenta a classe DataCollector que implementa métodos para leitu
 em sistemas Linux.
 """
 
+import ctypes
+import ctypes.util
 import time
 from pathlib import Path
+from file_system_collector import Statvfs
 
 class DataCollector:
     # Construtor
     def __init__(self):
-        pass
+        # Carrega libc e statvfs
+        self.libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno = True)
+        self.statvfs = self.libc.statvfs
+        self.statvfs.argtypes = [ctypes.c_char_p, ctypes.POINTER(Statvfs)]
 
     ##########################
     # COLETA DE DADOS DA CPU #
@@ -168,6 +174,50 @@ class DataCollector:
     # COLETA DE DADOS DOS PROCESSOS #
     #################################
 
+    # Função para resolver link simbólico
+    def readlink(self, path, buffer_size=4096):
+        buf = ctypes.create_string_buffer(buffer_size)
+        path_bytes = str(path).encode('utf-8')
+        result = self.libc.readlink(path_bytes, buf, buffer_size)
+        if result == -1:
+            errno = ctypes.get_errno()
+            raise OSError(errno, f"Erro ao ler link: {path}")
+        return buf.value.decode()
+
+    def get_process_resources(self, pid):
+        fd_dir = Path(f"/proc/{pid}/fd")
+        resources = {
+            "arquivos": [],
+            "sockets": [],
+            "pipes": [],
+            "eventfd": [],
+            "inotify": [],
+            "outros": []
+        }
+
+        try:
+            for fd_path in fd_dir.iterdir():
+                try:
+                    target = self.readlink(fd_path)
+                    if "socket:" in target:
+                        resources["sockets"].append(target)
+                    elif "pipe:" in target:
+                        resources["pipes"].append(target)
+                    elif "eventfd" in target:
+                        resources["eventfd"].append(target)
+                    elif "inotify" in target:
+                        resources["inotify"].append(target)
+                    elif "anon_inode" in target:
+                        resources["outros"].append(target)
+                    else:
+                        resources["arquivos"].append(target)
+                except Exception as e:
+                    resources["outros"].append(f"{fd_path.name}: erro ao ler ({e})")
+        except Exception as e:
+            print(f"Erro ao acessar /proc/{pid}/fd: {e}")
+        
+        return resources
+
     """
     Busca o usuário correspondente ao uid recebido por parâmetro no arquivo /etc/passwd.
 
@@ -202,8 +252,11 @@ class DataCollector:
             if process_id.is_dir() and process_id.name.isdigit():
                 process_data = {}
 
-                # salva id do processo
+                # Salva id do processo
                 process_data['process_id'] = process_id.name
+
+                # Salva os recursos usados pelo processo
+                process_data['resources'] = self.get_process_resources(process_id.name)
 
                 # Bloco try para verificar se os processos ainda existem durante o acesso aos mesmos
                 try:
@@ -285,3 +338,9 @@ class DataCollector:
             n_threads += len(process['thread_data'])
 
         return processes, n_threads
+
+
+if __name__ == "__main__":
+    data_collector = DataCollector()
+
+    data_collector.process_data_collector()
