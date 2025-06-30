@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 Esta classe é responsável por construir e gerenciar todos os elementos da interface gráfica do dashboard.
 Ela organiza os gráficos, tabelas e outros widgets para exibir informações de monitoramento do sistema.
 """
-class Interface:
+class Interface(tk.Frame):
 
-    def __init__(self, root, data_collector):
-        self.root = root
+    def __init__(self, parent, controller, data_collector):
+        super().__init__(parent, bg="#dcdcdc")
+
+        self.controller = controller
         self.data_collector = data_collector
-        self.root.title("Dashboard - Projeto A")
-        self.root.geometry("1800x900")
-        self.root.configure(bg="#dcdcdc")
+
         self.cpu_chart_frame = None
         self.memory_chart_frame = None
         self.virtual_memory_chart_frame = None
@@ -38,9 +38,9 @@ class Interface:
 
         #Configura o layout da grid para janela principal
         for i in range(3):
-            self.root.grid_columnconfigure(i, weight=1)
+            self.grid_columnconfigure(i, weight=1)
         for i in range(5):
-            self.root.grid_rowconfigure(i, weight=1)
+            self.grid_rowconfigure(i, weight=1)
 
         self.create_op_frame()
 
@@ -49,12 +49,16 @@ class Interface:
     na parte superior da janela do dashboard.
     """
     def create_op_frame(self):
-        op_frame = tk.Frame(self.root, bd=2, relief="groove", padx=10, pady=10)
+        op_frame = tk.Frame(self, bd=2, relief="groove", padx=10, pady=10)
         op_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=10, pady=10)
         op_frame.grid_columnconfigure(0, weight=1)
 
         label = tk.Label(op_frame, text="Sistema Operacional", font=("Arial", 16), fg="black")
         label.grid(row=0, column=0, sticky="nsew")
+
+        switch_btn = tk.Button(op_frame, text="Arquivos",
+                               command=lambda: self.controller.show_frame("ConfigFrame"))
+        switch_btn.grid(row=0, column=1, sticky="e")
 
     """
     Cria ou atualiza um gráfico de pizza que exibe o status de uso da memória RAM (livre vs. usada).
@@ -63,7 +67,7 @@ class Interface:
         data_percent = data_memory["memory_free_percent"]
 
         if self.memory_chart_frame is None:
-            self.memory_chart_frame = tk.Frame(self.root)
+            self.memory_chart_frame = tk.Frame(self)
             self.memory_chart_frame.grid(row=1, column=2, padx=10, pady=10, sticky="nsew")
 
             self.memory_fig, self.memory_ax = plt.subplots(figsize=(3.5, 3.5))
@@ -85,7 +89,7 @@ class Interface:
         data_percent = data_virtual_memory["vmem_free_percent"]
 
         if self.virtual_memory_chart_frame is None:
-            self.virtual_memory_chart_frame = tk.Frame(self.root)
+            self.virtual_memory_chart_frame = tk.Frame(self)
             self.virtual_memory_chart_frame.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
             self.virtual_memory_fig, self.virtual_memory_ax = plt.subplots(figsize=(3.5, 3.5))
@@ -107,7 +111,7 @@ class Interface:
         data_percent = data_cpu["cpu_idle_percent"]
 
         if self.cpu_chart_frame is None:
-            self.cpu_chart_frame = tk.Frame(self.root)
+            self.cpu_chart_frame = tk.Frame(self)
             self.cpu_chart_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
             self.cpu_fig, self.cpu_ax = plt.subplots(figsize=(3.5, 3.5))
@@ -128,7 +132,7 @@ class Interface:
     """
     def dinamic_data_table(self, memory_data):
         if self.memory_frame is None:
-            self.memory_frame = tk.Frame(self.root, bg="#dcdcdc")
+            self.memory_frame = tk.Frame(self, bg="#dcdcdc")
             self.memory_frame.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
 
             label = tk.Label(self.memory_frame, text="Informações Dinâmicas", font=("Arial", 14, "bold"), bg="#dcdcdc")
@@ -167,7 +171,7 @@ class Interface:
     """
     def static_data_table(self, static_data):
 
-        static_data_frame = tk.Frame(self.root, bg="#dcdcdc")
+        static_data_frame = tk.Frame(self, bg="#dcdcdc")
         static_data_frame.grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
 
         label = tk.Label(static_data_frame, text="Informações Estáticas", font=("Arial", 14, "bold"), bg="#dcdcdc")
@@ -199,7 +203,7 @@ class Interface:
     """
     def show_process_and_threads_table(self, process_threads_data, n_threads):
         if self.tablept_frame is None:
-            self.tablept_frame = tk.Frame(self.root, bg="#dcdcdc")
+            self.tablept_frame = tk.Frame(self, bg="#dcdcdc")
             self.tablept_frame.grid(row=2, column=2, padx=10, pady=10, sticky="nsew")
 
             label = tk.Label(self.tablept_frame, text="Processos X Threads", font=("Arial", 14, "bold"), bg="#dcdcdc")
@@ -234,7 +238,7 @@ class Interface:
     """
     def show_process_table(self, processes_data):
         if self.tablep_frame is None:
-            self.tablep_frame = tk.Frame(self.root, bg="#dcdcdc")
+            self.tablep_frame = tk.Frame(self, bg="#dcdcdc")
             self.tablep_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
             label = tk.Label(self.tablep_frame, text="Informações dos Processos", font=("Arial", 12, "bold"), bg="#dcdcdc")
@@ -314,7 +318,7 @@ class Interface:
         self.abrir_popup(process_info)
 
     def abrir_popup(self, process_info):
-        popup = tk.Toplevel(self.root)
+        popup = tk.Toplevel(self)
         popup.title(f"Detalhes do Processo {process_info['name']} [PID {process_info['pid']}]")
         popup.geometry("600x500")
         popup.configure(bg="#f0f0f0")
