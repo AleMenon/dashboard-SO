@@ -37,7 +37,7 @@ class FileSystemCollector:
                 # Ignora sistemas de arquivos virtuais
                 if fs_type in ("ext4"):
                     mounts.append(mountpoint)
-                    print(device)
+                    #print(device)
         return mounts
 
     def get_fs_usage(self, mountpoint):

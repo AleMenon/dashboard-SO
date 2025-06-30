@@ -57,7 +57,7 @@ class Interface(tk.Frame):
         label.pack(anchor="center")
 
         switch_btn = tk.Button(op_frame, text="Arquivos",
-                               command=lambda: self.controller.show_frame("ConfigFrame"))
+                               command=lambda: self.controller.show_frame("FileFrame"))
         switch_btn.pack(side="right")
 
     """
@@ -280,7 +280,7 @@ class Interface(tk.Frame):
             self.process_tree.bind("<Double-1>", self.on_process_click)
 
         # Este bloco atualiza os dados da tabela sem recriá-la
-        if self.process_tree is not None:
+        if self.process_tree and self.process_tree.winfo_exists():
             # Limpa linhas antigas
             for item in self.process_tree.get_children():
                 self.process_tree.delete(item)
