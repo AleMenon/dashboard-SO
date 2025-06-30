@@ -17,7 +17,7 @@ class Controller:
         self.root.protocol("WM_DELETE_WINDOW", self.close)
 
         self.data_collector = DataCollector()
-        self.interface = Interface(self.root)
+        self.interface = Interface(self.root, self.data_collector)
         self.running = False
 
         # Threads

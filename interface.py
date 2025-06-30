@@ -9,8 +9,9 @@ Ela organiza os gráficos, tabelas e outros widgets para exibir informações de
 """
 class Interface:
 
-    def __init__(self, root):
+    def __init__(self, root, data_collector):
         self.root = root
+        self.data_collector = data_collector
         self.root.title("Dashboard - Projeto A")
         self.root.geometry("1800x900")
         self.root.configure(bg="#dcdcdc")
@@ -33,6 +34,7 @@ class Interface:
         self.tablept_tree = None
         self.process_tree = None
 
+        self.process_details_map = {}
 
         #Configura o layout da grid para janela principal
         for i in range(3):
@@ -271,6 +273,8 @@ class Interface:
             self.process_tree.pack(fill="both", expand=True)
             scrollbar.config(command=self.process_tree.yview)
 
+            self.process_tree.bind("<Double-1>", self.on_process_click)
+
         # Este bloco atualiza os dados da tabela sem recriá-la
         if self.process_tree is not None:
             # Limpa linhas antigas
@@ -279,7 +283,7 @@ class Interface:
 
             # Adiciona os novos dados
             for process in processes_data:
-                self.process_tree.insert("", "end", values=(
+                item_id = self.process_tree.insert("", "end", values=(
                     process["process_id"],
                     process["name"],
                     process["user"],
@@ -290,7 +294,64 @@ class Interface:
                     process["data"],
                     process["n_threads"]
                 ))
+                self.process_details_map[item_id] = {
+                    "pid": process["process_id"],
+                    "name": process["name"],
+                    "thread_data": process["thread_data"]
+                }
 
+    def on_process_click(self, event):
+        selected_item = self.process_tree.focus()
+        if not selected_item:
+            return
+
+        process_info = self.process_details_map.get(selected_item)
+        if not process_info:
+            return
+
+        pid = process_info["pid"]
+        process_info["resources"] = self.data_collector.get_process_resources(pid)
+        self.abrir_popup(process_info)
+
+    def abrir_popup(self, process_info):
+        popup = tk.Toplevel(self.root)
+        popup.title(f"Detalhes do Processo {process_info['name']} [PID {process_info['pid']}]")
+        popup.geometry("600x500")
+        popup.configure(bg="#f0f0f0")
+
+        container = tk.Frame(popup)
+        container.pack(fill="both", expand=True, padx=10, pady=10)
+
+        canvas = tk.Canvas(container, bg="#f0f0f0")
+        scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg="#f0f0f0")
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Mostrar threads
+        tk.Label(scrollable_frame, text="Threads:", font=("Arial", 12, "bold"), bg="#f0f0f0").pack(anchor="w")
+        for thread in process_info["thread_data"]:
+            tk.Label(scrollable_frame, text=f"- {thread}", bg="#f0f0f0").pack(anchor="w", padx=20)
+
+        # Mostrar recursos
+        tk.Label(scrollable_frame, text="\nRecursos:", font=("Arial", 12, "bold"), bg="#f0f0f0").pack(anchor="w")
+        for k, v in process_info["resources"].items():
+            tk.Label(scrollable_frame, text=f"{k.upper()} ({len(v)})", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(
+                anchor="w")
+            for item in v:
+                tk.Label(scrollable_frame, text=f" - {item}", bg="#f0f0f0").pack(anchor="w", padx=20)
+
+        tk.Button(popup, text="Fechar", command=popup.destroy).pack(pady=10)
+        canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1 * (e.delta / 120)), "units"))
     """
     Função de para atualizar o gráfico de status da CPU.
     """
