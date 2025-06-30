@@ -16,7 +16,7 @@ class Controller:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Sistema Operacional")
-        self.root.geometry("1800x900")
+        self.root.geometry("1920x1080")
         self.root.protocol("WM_DELETE_WINDOW", self.close)
 
         self.data_collector = DataCollector()

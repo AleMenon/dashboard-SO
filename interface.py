@@ -50,15 +50,15 @@ class Interface(tk.Frame):
     """
     def create_op_frame(self):
         op_frame = tk.Frame(self, bd=2, relief="groove", padx=10, pady=10)
-        op_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=10, pady=10)
+        op_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=50, pady=10)
         op_frame.grid_columnconfigure(0, weight=1)
 
         label = tk.Label(op_frame, text="Sistema Operacional", font=("Arial", 16), fg="black")
-        label.grid(row=0, column=0, sticky="nsew")
+        label.pack(anchor="center")
 
         switch_btn = tk.Button(op_frame, text="Arquivos",
                                command=lambda: self.controller.show_frame("ConfigFrame"))
-        switch_btn.grid(row=0, column=1, sticky="e")
+        switch_btn.pack(side="right")
 
     """
     Cria ou atualiza um gráfico de pizza que exibe o status de uso da memória RAM (livre vs. usada).
