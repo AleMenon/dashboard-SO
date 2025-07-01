@@ -1,4 +1,4 @@
-PYTHON=.venv/bin/python
+PYTHON=python3
 MAIN=main.py
 
 run:

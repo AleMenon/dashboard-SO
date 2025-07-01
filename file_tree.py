@@ -63,43 +63,54 @@ class FileTree:
         return perms
 
     def list_content(self, path):
-        dir_p = self.opendir(path.encode())
 
-        if not dir_p:
+        try:
+            dir_p = self.opendir(path.encode())
+
+            if not dir_p:
+                print(f"[DEBUG] Failed to open: {path}")
+                return []
+
+            content_list = []
+
+            while True:
+                entry = self.readdir(dir_p)
+                if not bool(entry):
+                      break
+
+                try:
+                    name = entry.contents.d_name.decode()
+                except Exception as e:
+                    print(f"[DEBUG] Could not decode d_name: {e}")
+                    continue
+                
+                if name.startswith("."):
+                    continue
+
+                full_path = f"{path.rstrip('/')}/{name}"
+                file_info = Stat()
+
+                if self.stat(full_path.encode(), ctypes.byref(file_info)) != 0:
+                    continue
+
+                content = {
+                    "name": name,
+                    "type": "Diretório" if entry.contents.d_type == DT_DIR else "Arquivo",
+                    "size": file_info.st_size,
+                    "mod_time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(file_info.st_mtime)),
+                    "permissions": self.parse_perms(file_info.st_mode)
+
+                }
+
+                content_list.append(content)
+
+
+            self.closedir(dir_p)
+            return content_list
+
+        except Exception as e:
+            print(f"[EXCEPTION] Error listing content of {path}: {e}")
             return []
-
-        content_list = []
-
-        entry = self.readdir(dir_p)
-        while entry:
-            name = entry.contents.d_name.decode()
-            if name.startswith("."):
-                entry = self.readdir(dir_p)
-                continue
-
-            full_path = f"{path.rstrip('/')}/{name}"
-            file_info = Stat()
-
-            if self.stat(full_path.encode(), ctypes.byref(file_info)) != 0:
-                entry = self.readdir(dir_p)
-                continue
-
-            content = {
-                "name": name,
-                "type": "Diretório" if entry.contents.d_type == DT_DIR else "Arquivo",
-                "size": file_info.st_size,
-                "mod_time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(file_info.st_mtime)),
-                "permissions": self.parse_perms(file_info.st_mode)
-
-            }
-
-            content_list.append(content)
-
-            entry = self.readdir(dir_p)
-
-        self.closedir(dir_p)
-        return content_list
-
 
 if __name__ == "__main__":
     filetree = FileTree()

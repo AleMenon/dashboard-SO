@@ -111,7 +111,7 @@ class FileInterface(tk.Frame):
             new_path = f"{base}/{name}" if base != "/" else f"/{name}"
 
         if new_path.startswith("/proc"):
-            messagebox.showwarning("🚫 Bloqueado", f"Navegação para {new_path} não é permitida!")
+            messagebox.showwarning(" Bloqueado", f"Navegação para {new_path} não é permitida!")
             return
 
         self.current_path.set(new_path)
@@ -119,7 +119,6 @@ class FileInterface(tk.Frame):
 
     def refresh_directory(self):
         path = self.current_path.get().strip()
-        print(f"Navegando: {path}")
 
         content = self.file_tree.list_content(path)
 

@@ -53,12 +53,10 @@ class Controller:
         frame.tkraise()
 
         if frame_name == "DashboardFrame":
-            print("▶️ Voltando para o Dashboard, monitoramento ON")
             self.running = True
             self.ensure_threads_running()
 
         elif frame_name == "FileFrame":
-            print("⏸️ Entrando no Gerenciador de Arquivos, monitoramento OFF")
             self.running = False
 
     def setup(self):
@@ -101,7 +99,6 @@ class Controller:
 
     def close(self):
         """Finaliza tudo com segurança"""
-        print("⏹️ Encerrando tudo...")
         self.running = False
         if self.root.winfo_exists():
             self.root.quit()
@@ -111,7 +108,6 @@ class Controller:
         """Loop CPU"""
         while True:
             if not self.running:
-                print("❌ Loop CPU finalizado")
                 break
             cpu_percent = self.data_collector.cpu_percent_collector()
             self.root.after(0, self.frames["DashboardFrame"].update_data_cpu, cpu_percent)
@@ -121,7 +117,6 @@ class Controller:
         """Loop Memória"""
         while True:
             if not self.running:
-                print("❌ Loop Memória finalizado")
                 break
             memory_percent = self.data_collector.memory_percent_collector()
             self.root.after(0, self.frames["DashboardFrame"].update_data_memory, memory_percent)
@@ -131,7 +126,6 @@ class Controller:
         """Loop Processos"""
         while True:
             if not self.running:
-                print("❌ Loop Processos finalizado")
                 break
             processes_data = self.data_collector.process_data_collector()
             self.root.after(0, self.frames["DashboardFrame"].update_data_process,
