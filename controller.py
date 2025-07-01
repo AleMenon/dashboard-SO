@@ -12,10 +12,10 @@ from data_collector import DataCollector
 from file_system_collector import FileSystemCollector
 from interface import Interface
 from fileInterface import FileInterface
+from file_tree import FileTree
 
 
 class Controller:
-    # Construtor
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Sistema Operacional")
@@ -24,6 +24,7 @@ class Controller:
 
         self.data_collector = DataCollector()
         self.fs_collector = FileSystemCollector()
+        self.file_tree = FileTree()
 
         self.container = tk.Frame(self.root)
         self.container.pack(fill="both", expand=True)
@@ -36,27 +37,35 @@ class Controller:
         self.frames["DashboardFrame"] = dashboard
 
         # Segunda tela
-        file_frame = FileInterface(self.container, self, self.fs_collector)
+        file_frame = FileInterface(self.container, self, self.fs_collector, self.file_tree)
         file_frame.grid(row=0, column=0, sticky="nsew")
         self.frames["FileFrame"] = file_frame
 
-        # Threads
+        # Controle das threads
         self.running = False
         self.cpu_thread = None
         self.memory_thread = None
         self.process_thread = None
 
     def show_frame(self, frame_name):
-        """Exibe o frame desejado."""
+        """Exibe o frame desejado e gerencia o monitoramento"""
         frame = self.frames[frame_name]
         frame.tkraise()
+
+        if frame_name == "DashboardFrame":
+            print("▶️ Voltando para o Dashboard, monitoramento ON")
+            self.running = True
+            self.ensure_threads_running()
+
+        elif frame_name == "FileFrame":
+            print("⏸️ Entrando no Gerenciador de Arquivos, monitoramento OFF")
+            self.running = False
 
     def setup(self):
         """Inicializa os dados estáticos na interface."""
         dashboard = self.frames["DashboardFrame"]
         process_data = self.data_collector.process_data_collector()
 
-        # Construção da interface e inserção dos dados iniciais
         dashboard.static_data_table(self.data_collector.memory_data_collector())
         dashboard.show_process_table(process_data[0])
         dashboard.pie_chart_memory(self.data_collector.memory_percent_collector())
@@ -66,59 +75,65 @@ class Controller:
         dashboard.show_process_and_threads_table(process_data[0], process_data[1])
 
     def start(self):
-        """Inicia a thread responsável por rodar o backend e a coleta de dados."""
+        """Inicia o sistema"""
         self.setup()
         self.running = True
-
-        # Criação e início da thread de CPU
-        self.cpu_thread = threading.Thread(target=self.cpu_update_loop, daemon=True)
-        self.cpu_thread.start()
-
-        # Criação e início da thread de memória
-        self.memory_thread = threading.Thread(target=self.memory_update_loop, daemon=True)
-        self.memory_thread.start()
-
-        # Criação e início da thread de processos
-        self.process_thread = threading.Thread(target=self.process_update_loop, daemon=True)
-        self.process_thread.start()
-
+        self.ensure_threads_running()
         self.show_frame("DashboardFrame")
         try:
             self.root.mainloop()
         except KeyboardInterrupt:
             self.close()
 
+    def ensure_threads_running(self):
+        """Garante que as threads estejam ativas"""
+        if self.cpu_thread is None or not self.cpu_thread.is_alive():
+            self.cpu_thread = threading.Thread(target=self.cpu_update_loop, daemon=True)
+            self.cpu_thread.start()
+
+        if self.memory_thread is None or not self.memory_thread.is_alive():
+            self.memory_thread = threading.Thread(target=self.memory_update_loop, daemon=True)
+            self.memory_thread.start()
+
+        if self.process_thread is None or not self.process_thread.is_alive():
+            self.process_thread = threading.Thread(target=self.process_update_loop, daemon=True)
+            self.process_thread.start()
+
     def close(self):
-        """Responsável por encerrar a thread do backend e destruir a janela."""
-        #print("Fechando aplicativo com segurança...")
+        """Finaliza tudo com segurança"""
+        print("⏹️ Encerrando tudo...")
         self.running = False
         if self.root.winfo_exists():
             self.root.quit()
             self.root.destroy()
 
     def cpu_update_loop(self):
-        """Método executado pela thread, responsável pela coleta de dados da CPU."""
-        while self.running:
-            cpu_percent = self.data_collector.cpu_percent_collector()
+        """Loop CPU"""
+        while True:
             if not self.running:
+                print("❌ Loop CPU finalizado")
                 break
+            cpu_percent = self.data_collector.cpu_percent_collector()
             self.root.after(0, self.frames["DashboardFrame"].update_data_cpu, cpu_percent)
             time.sleep(1)
 
     def memory_update_loop(self):
-        """Método executado pela thread, responsável pela coleta de dados da memória."""
-        while self.running:
-            memory_percent = self.data_collector.memory_percent_collector()
+        """Loop Memória"""
+        while True:
             if not self.running:
+                print("❌ Loop Memória finalizado")
                 break
+            memory_percent = self.data_collector.memory_percent_collector()
             self.root.after(0, self.frames["DashboardFrame"].update_data_memory, memory_percent)
             time.sleep(1)
 
     def process_update_loop(self):
-        """Método executado pela thread, responsável pela coleta de dados dos processos."""
-        while self.running:
-            processes_data = self.data_collector.process_data_collector()
+        """Loop Processos"""
+        while True:
             if not self.running:
+                print("❌ Loop Processos finalizado")
                 break
-            self.root.after(0, self.frames["DashboardFrame"].update_data_process, processes_data[0], processes_data[1])
+            processes_data = self.data_collector.process_data_collector()
+            self.root.after(0, self.frames["DashboardFrame"].update_data_process,
+                            processes_data[0], processes_data[1])
             time.sleep(1)

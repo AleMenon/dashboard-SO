@@ -6,6 +6,7 @@ import time
 DT_DIR = 4
 DT_REG = 8
 
+
 # Struct dirent
 class Dirent(ctypes.Structure):
     _fields_ = [
@@ -15,6 +16,7 @@ class Dirent(ctypes.Structure):
         ("d_type", ctypes.c_ubyte),
         ("d_name", ctypes.c_char * 256),
     ]
+
 
 # Struct stat (simplificada)
 class Stat(ctypes.Structure):
@@ -38,8 +40,9 @@ class Stat(ctypes.Structure):
         ("st_ctime_nsec", ctypes.c_long),
     ]
 
+
 class FileTree:
-    #Construtor
+    # Construtor
     def __init__(self):
         self.libc = ctypes.CDLL(ctypes.util.find_library("c"))
         self.opendir = self.libc.opendir
@@ -64,7 +67,7 @@ class FileTree:
 
         if not dir_p:
             return []
-        
+
         content_list = []
 
         entry = self.readdir(dir_p)
@@ -100,5 +103,5 @@ class FileTree:
 
 if __name__ == "__main__":
     filetree = FileTree()
-    
+
     content = filetree.list_content('/home/alemenon/Documents/sistemas-operacionais/dashboard-SO')
