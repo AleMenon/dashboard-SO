@@ -11,15 +11,33 @@ import time
 from data_collector import DataCollector
 from file_system_collector import FileSystemCollector
 from interface import Interface
-from fileInterface import FileInterface
+from file_interface import FileInterface
 
 
 class Controller:
-    # Construtor
+
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Sistema Operacional")
-        self.root.geometry("1920x1080")
+
+        # Força cálculo da tela
+        self.root.update_idletasks()
+
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        width = int(screen_width * 0.8)
+        height = int(screen_height * 0.8)
+
+        # Evita valores zero ou negativos
+        width = max(width, 400)
+        height = max(height, 300)
+
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+
         self.root.protocol("WM_DELETE_WINDOW", self.close)
 
         self.data_collector = DataCollector()
@@ -30,33 +48,41 @@ class Controller:
 
         self.frames = {}
 
-        # Dashboard principal
+
         dashboard = Interface(self.container, self, self.data_collector)
         dashboard.grid(row=0, column=0, sticky="nsew")
         self.frames["DashboardFrame"] = dashboard
 
-        # Segunda tela
+
         file_frame = FileInterface(self.container, self, self.fs_collector)
         file_frame.grid(row=0, column=0, sticky="nsew")
         self.frames["FileFrame"] = file_frame
 
-        # Threads
+
         self.running = False
         self.cpu_thread = None
         self.memory_thread = None
         self.process_thread = None
 
+    """
+    Exibe um frame específico com base no nome fornecido.
+    Permite alternar entre as telas (Dashboard ou FileInterface).
+    """
+
     def show_frame(self, frame_name):
-        """Exibe o frame desejado."""
         frame = self.frames[frame_name]
         frame.tkraise()
 
+    """
+    Realiza a configuração inicial:
+    - Coleta os dados iniciais
+    - Preenche tabelas e gráficos com valores estáticos e primeiros valores dinâmicos
+    """
+
     def setup(self):
-        """Inicializa os dados estáticos na interface."""
         dashboard = self.frames["DashboardFrame"]
         process_data = self.data_collector.process_data_collector()
 
-        # Construção da interface e inserção dos dados iniciais
         dashboard.static_data_table(self.data_collector.memory_data_collector())
         dashboard.show_process_table(process_data[0])
         dashboard.pie_chart_memory(self.data_collector.memory_percent_collector())
@@ -65,20 +91,24 @@ class Controller:
         dashboard.dinamic_data_table(self.data_collector.memory_percent_collector())
         dashboard.show_process_and_threads_table(process_data[0], process_data[1])
 
+    """
+    Inicia a aplicação:
+    - Executa a configuração inicial
+    - Cria e inicia as threads de atualização para CPU, memória e processos
+    - Exibe o dashboard inicial
+    - Executa o loop principal do Tkinter
+    """
+
     def start(self):
-        """Inicia a thread responsável por rodar o backend e a coleta de dados."""
         self.setup()
         self.running = True
 
-        # Criação e início da thread de CPU
         self.cpu_thread = threading.Thread(target=self.cpu_update_loop, daemon=True)
         self.cpu_thread.start()
 
-        # Criação e início da thread de memória
         self.memory_thread = threading.Thread(target=self.memory_update_loop, daemon=True)
         self.memory_thread.start()
 
-        # Criação e início da thread de processos
         self.process_thread = threading.Thread(target=self.process_update_loop, daemon=True)
         self.process_thread.start()
 
@@ -88,16 +118,26 @@ class Controller:
         except KeyboardInterrupt:
             self.close()
 
+    """
+    Fecha a aplicação de forma segura:
+    - Interrompe as threads de coleta
+    - Fecha a janela principal do Tkinter
+    """
+
     def close(self):
-        """Responsável por encerrar a thread do backend e destruir a janela."""
-        #print("Fechando aplicativo com segurança...")
         self.running = False
         if self.root.winfo_exists():
             self.root.quit()
             self.root.destroy()
 
+    """
+    Loop de atualização contínua da CPU.
+    É executado em uma thread separada.
+    Coleta os dados de uso da CPU e solicita atualização na interface.
+    """
+
     def cpu_update_loop(self):
-        """Método executado pela thread, responsável pela coleta de dados da CPU."""
+
         while self.running:
             cpu_percent = self.data_collector.cpu_percent_collector()
             if not self.running:
@@ -105,8 +145,14 @@ class Controller:
             self.root.after(0, self.frames["DashboardFrame"].update_data_cpu, cpu_percent)
             time.sleep(1)
 
+    """
+    Loop de atualização contínua da memória (RAM e virtual).
+    Executa em uma thread separada.
+    Coleta os dados de uso de memória e solicita atualização na interface.
+    """
+
     def memory_update_loop(self):
-        """Método executado pela thread, responsável pela coleta de dados da memória."""
+
         while self.running:
             memory_percent = self.data_collector.memory_percent_collector()
             if not self.running:
@@ -114,8 +160,13 @@ class Controller:
             self.root.after(0, self.frames["DashboardFrame"].update_data_memory, memory_percent)
             time.sleep(1)
 
+    """
+    Loop de atualização contínua da lista de processos.
+    Executa em uma thread separada.
+    Coleta os dados dos processos em execução e solicita atualização na interface.
+    """
+
     def process_update_loop(self):
-        """Método executado pela thread, responsável pela coleta de dados dos processos."""
         while self.running:
             processes_data = self.data_collector.process_data_collector()
             if not self.running:

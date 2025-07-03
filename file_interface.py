@@ -1,6 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 
+"""
+Classe responsável por construir e gerenciar a interface gráfica da aba de Sistemas de Arquivos.
+Ela exibe informações sobre os sistemas de arquivos montados, como espaço total, usado, livre e porcentagem de uso.
+"""
+
 class FileInterface(tk.Frame):
     def __init__(self, parent, controller, fs_collector):
         super().__init__(parent, bg="#dcdcdc")
@@ -17,6 +22,11 @@ class FileInterface(tk.Frame):
         self.create_table()
         self.refresh_table()
 
+    """
+    Cria o cabeçalho da interface, contendo o título "Sistemas de Arquivos"
+    e um botão para voltar à tela principal do dashboard.
+    """
+
     def create_header(self):
 
         op_frame = tk.Frame(self, bd=2, relief="groove", padx=10, pady=10)
@@ -30,21 +40,29 @@ class FileInterface(tk.Frame):
                              command=lambda: self.controller.show_frame("DashboardFrame"))
         back_btn.pack(side="right")
 
+    """
+    Cria a tabela principal que mostra os pontos de montagem dos sistemas de arquivos,
+    juntamente com informações de capacidade total, espaço usado, espaço livre e porcentagem de uso.
+    """
+
     def create_table(self):
         self.table_frame = tk.Frame(self, bg="#dcdcdc")
         self.table_frame.grid(row=1, column=0, columnspan=3, padx=50, pady=20, sticky="nsew")
 
         columns = ("Ponto de Montagem", "Total (GB)", "Usado (GB)", "Livre (GB)", "Uso (%)")
 
-        # AQUI: Defina a altura para 1 linha de dados visível
         self.tree = ttk.Treeview(self.table_frame, columns=columns, show="headings", height=1)
 
         for col in columns:
             self.tree.heading(col, text=col)
             self.tree.column(col, anchor="center", width=120)  # Adicionei width para melhor visualização
 
-        # AQUI: Altere o preenchimento para apenas horizontal
         self.tree.pack(fill="x", expand=True)
+
+    """
+    Atualiza os dados exibidos na tabela com informações atualizadas
+    dos sistemas de arquivos montados no sistema.
+    """
 
     def refresh_table(self):
         mounts = self.fs_collector.get_mounts()

@@ -15,6 +15,9 @@ class Interface(tk.Frame):
         self.controller = controller
         self.data_collector = data_collector
 
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
         self.cpu_chart_frame = None
         self.memory_chart_frame = None
         self.virtual_memory_chart_frame = None
@@ -50,8 +53,10 @@ class Interface(tk.Frame):
     """
     def create_op_frame(self):
         op_frame = tk.Frame(self, bd=2, relief="groove", padx=10, pady=10)
-        op_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=50, pady=10)
+        op_frame.grid(row=0, column=0, columnspan=3, sticky="new", padx=50, pady=10)
+
         op_frame.grid_columnconfigure(0, weight=1)
+        op_frame.grid_columnconfigure(1, weight=0)
 
         label = tk.Label(op_frame, text="Sistema Operacional", font=("Arial", 16), fg="black")
         label.pack(anchor="center")
@@ -146,9 +151,10 @@ class Interface(tk.Frame):
             self.memory_tree.heading("Gb", text="GB")
             self.memory_tree.heading("Porcentagem", text="PORCENTAGEM")
 
-            self.memory_tree.column("Info", width=300, anchor="w")
-            self.memory_tree.column("Gb", width=200, anchor="center")
-            self.memory_tree.column("Porcentagem", width=200, anchor="center")
+            self.memory_tree.column("Info", anchor="w", stretch=True)
+            self.memory_tree.column("Gb", anchor="center", stretch=True)
+            self.memory_tree.column("Porcentagem", anchor="center", stretch=True)
+            self.memory_frame.bind("<Configure>", self.resize_memory_columns)
 
         # Atualiza os dados da tabela
         # Primeiro limpa os itens antigos
@@ -164,6 +170,12 @@ class Interface(tk.Frame):
 
         for row in rows:
             self.memory_tree.insert("", "end", values=row)
+
+    def resize_memory_columns(self, event):
+        total_width = event.width
+        self.memory_tree.column("Info", width=int(total_width * 0.5))
+        self.memory_tree.column("Gb", width=int(total_width * 0.25))
+        self.memory_tree.column("Porcentagem", width=int(total_width * 0.25))
 
     """
     Cria uma tabela que exibe informações estáticas de memória, como memória total
@@ -185,9 +197,13 @@ class Interface(tk.Frame):
         tree.heading("Gb", text="GB")
         tree.heading("Porcentagem", text="PORCENTAGEM")
 
-        tree.column("Info", width=300, anchor="w")
-        tree.column("Gb", width=200, anchor="center")
-        tree.column("Porcentagem", width=200, anchor="center")
+        tree.column("Info", anchor="w", stretch=True)
+        tree.column("Gb", anchor="center", stretch=True)
+        tree.column("Porcentagem", anchor="center", stretch=True)
+
+        self.static_tree = tree  # Salva como atributo para usar no resize
+
+        static_data_frame.bind("<Configure>", self.resize_static_columns)
 
         rows = [
             ("Memória Total", static_data["total_memory"], "100.0"),
@@ -197,6 +213,12 @@ class Interface(tk.Frame):
 
         for row in rows:
             tree.insert("", "end", values=row)
+
+    def resize_static_columns(self, event):
+        total_width = event.width
+        self.static_tree.column("Info", width=int(total_width * 0.5))
+        self.static_tree.column("Gb", width=int(total_width * 0.25))
+        self.static_tree.column("Porcentagem", width=int(total_width * 0.25))
 
     """
     Cria ou atualiza uma tabela com o número total de processos e threads em execução.
@@ -216,8 +238,11 @@ class Interface(tk.Frame):
             self.tablept_tree.heading("Info", text=" ")
             self.tablept_tree.heading("Números", text="NÚMEROS")
 
-            self.tablept_tree.column("Info", width=300, anchor="w")
-            self.tablept_tree.column("Números", width=200, anchor="center")
+            self.tablept_tree.column("Info", anchor="w", stretch=True)
+            self.tablept_tree.column("Números", anchor="center", stretch=True)
+
+            # 🔑 Bind do evento de resize
+            self.tablept_frame.bind("<Configure>", self.resize_tablept_columns)
 
         # Limpa os dados antigos
         for item in self.tablept_tree.get_children():
@@ -232,16 +257,23 @@ class Interface(tk.Frame):
         for row in rows:
             self.tablept_tree.insert("", "end", values=row)
 
+    def resize_tablept_columns(self, event):
+        total_width = event.width
+        self.tablept_tree.column("Info", width=int(total_width * 0.7))
+        self.tablept_tree.column("Números", width=int(total_width * 0.3))
+
     """
     Cria ou atualiza uma tabela detalhada listando todos os processos em
     execução com informações como ID, nome, usuário, uso de memória, etc.
     """
+
     def show_process_table(self, processes_data):
         if self.tablep_frame is None:
             self.tablep_frame = tk.Frame(self, bg="#dcdcdc")
             self.tablep_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
-            label = tk.Label(self.tablep_frame, text="Informações dos Processos", font=("Arial", 12, "bold"), bg="#dcdcdc")
+            label = tk.Label(self.tablep_frame, text="Informações dos Processos",
+                             font=("Arial", 12, "bold"), bg="#dcdcdc")
             label.grid(row=0, column=0, pady=(10, 5), sticky="w")
 
             inner_frame = tk.Frame(self.tablep_frame)
@@ -255,16 +287,17 @@ class Interface(tk.Frame):
                 "Memória Virtual Usada", "Stack", "Heap", "Data", "Número de Threads"
             )
 
-            column_widths = {
-                "ID do Processo": 270,
-                "Nome": 300,
-                "Usuário": 130,
-                "Memória Usada": 210,
-                "Memória Virtual Usada": 370,
-                "Stack": 110,
-                "Heap": 110,
-                "Data": 110,
-                "Número de Threads": 270
+            # 🔑 Agora usamos proporções em vez de pixels fixos
+            self.process_column_ratios = {
+                "ID do Processo": 0.12,
+                "Nome": 0.15,
+                "Usuário": 0.08,
+                "Memória Usada": 0.10,
+                "Memória Virtual Usada": 0.18,
+                "Stack": 0.07,
+                "Heap": 0.07,
+                "Data": 0.07,
+                "Número de Threads": 0.16
             }
 
             self.process_tree = ttk.Treeview(inner_frame, columns=columns, show='headings',
@@ -272,14 +305,17 @@ class Interface(tk.Frame):
 
             for col in columns:
                 self.process_tree.heading(col, text=col.upper())
-                self.process_tree.column(col, width=column_widths.get(col, 100), anchor="w")
+                self.process_tree.column(col, anchor="w", stretch=True)  # ✅ stretch=True para ser flexível
 
             self.process_tree.pack(fill="both", expand=True)
             scrollbar.config(command=self.process_tree.yview)
 
             self.process_tree.bind("<Double-1>", self.on_process_click)
 
-        # Este bloco atualiza os dados da tabela sem recriá-la
+            # 🔑 Bind para redimensionar colunas dinamicamente
+            self.tablep_frame.bind("<Configure>", self.resize_process_columns)
+
+        # Atualiza os dados da tabela sem recriá-la
         if self.process_tree and self.process_tree.winfo_exists():
             # Limpa linhas antigas
             for item in self.process_tree.get_children():
@@ -304,6 +340,17 @@ class Interface(tk.Frame):
                     "thread_data": process["thread_data"]
                 }
 
+    def resize_process_columns(self, event):
+        total_width = event.width
+        for col, ratio in self.process_column_ratios.items():
+            self.process_tree.column(col, width=int(total_width * ratio))
+
+    """
+    Manipulador do evento de clique duplo em um item da tabela de processos.
+    Quando o usuário clica duas vezes em uma linha, obtém os detalhes do processo
+    correspondente e abre uma janela (popup) com informações adicionais.
+    """
+
     def on_process_click(self, event):
         selected_item = self.process_tree.focus()
         if not selected_item:
@@ -316,6 +363,12 @@ class Interface(tk.Frame):
         pid = process_info["pid"]
         process_info["resources"] = self.data_collector.get_process_resources(pid)
         self.abrir_popup(process_info)
+
+    """
+    Abre uma nova janela (popup) para exibir os detalhes completos do processo selecionado,
+    incluindo lista de threads associadas e recursos como arquivos abertos, bibliotecas,
+    sockets, entre outros.
+    """
 
     def abrir_popup(self, process_info):
         popup = tk.Toplevel(self)
