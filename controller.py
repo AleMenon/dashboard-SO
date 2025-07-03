@@ -20,7 +20,6 @@ class Controller:
         self.root = tk.Tk()
         self.root.title("Sistema Operacional")
 
-        # Força cálculo da tela
         self.root.update_idletasks()
 
         screen_width = self.root.winfo_screenwidth()
@@ -29,7 +28,6 @@ class Controller:
         width = int(screen_width * 0.8)
         height = int(screen_height * 0.8)
 
-        # Evita valores zero ou negativos
         width = max(width, 400)
         height = max(height, 300)
 

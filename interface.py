@@ -39,7 +39,7 @@ class Interface(tk.Frame):
 
         self.process_details_map = {}
 
-        #Configura o layout da grid para janela principal
+
         for i in range(3):
             self.grid_columnconfigure(i, weight=1)
         for i in range(5):
@@ -156,12 +156,11 @@ class Interface(tk.Frame):
             self.memory_tree.column("Porcentagem", anchor="center", stretch=True)
             self.memory_frame.bind("<Configure>", self.resize_memory_columns)
 
-        # Atualiza os dados da tabela
-        # Primeiro limpa os itens antigos
+
         for item in self.memory_tree.get_children():
             self.memory_tree.delete(item)
 
-        # Depois insere os novos dados
+
         rows = [
             ("Memória Livre", memory_data["memory_free"], memory_data["memory_free_percent"]),
             ("Memória Usada", memory_data["memory_usage"], memory_data["memory_usage_percent"]),
@@ -241,14 +240,14 @@ class Interface(tk.Frame):
             self.tablept_tree.column("Info", anchor="w", stretch=True)
             self.tablept_tree.column("Números", anchor="center", stretch=True)
 
-            # 🔑 Bind do evento de resize
+
             self.tablept_frame.bind("<Configure>", self.resize_tablept_columns)
 
-        # Limpa os dados antigos
+
         for item in self.tablept_tree.get_children():
             self.tablept_tree.delete(item)
 
-        # Insere os novos dados
+
         rows = [
             ("Processos", len(process_threads_data)),
             ("Threads", n_threads),
@@ -287,7 +286,7 @@ class Interface(tk.Frame):
                 "Memória Virtual Usada", "Stack", "Heap", "Data", "Número de Threads"
             )
 
-            # 🔑 Agora usamos proporções em vez de pixels fixos
+
             self.process_column_ratios = {
                 "ID do Processo": 0.12,
                 "Nome": 0.15,
@@ -305,23 +304,23 @@ class Interface(tk.Frame):
 
             for col in columns:
                 self.process_tree.heading(col, text=col.upper())
-                self.process_tree.column(col, anchor="w", stretch=True)  # ✅ stretch=True para ser flexível
+                self.process_tree.column(col, anchor="w", stretch=True)
 
             self.process_tree.pack(fill="both", expand=True)
             scrollbar.config(command=self.process_tree.yview)
 
             self.process_tree.bind("<Double-1>", self.on_process_click)
 
-            # 🔑 Bind para redimensionar colunas dinamicamente
+
             self.tablep_frame.bind("<Configure>", self.resize_process_columns)
 
-        # Atualiza os dados da tabela sem recriá-la
+
         if self.process_tree and self.process_tree.winfo_exists():
-            # Limpa linhas antigas
+
             for item in self.process_tree.get_children():
                 self.process_tree.delete(item)
 
-            # Adiciona os novos dados
+
             for process in processes_data:
                 item_id = self.process_tree.insert("", "end", values=(
                     process["process_id"],
@@ -394,12 +393,10 @@ class Interface(tk.Frame):
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # Mostrar threads
         tk.Label(scrollable_frame, text="Threads:", font=("Arial", 12, "bold"), bg="#f0f0f0").pack(anchor="w")
         for thread in process_info["thread_data"]:
             tk.Label(scrollable_frame, text=f"- {thread}", bg="#f0f0f0").pack(anchor="w", padx=20)
 
-        # Mostrar recursos
         tk.Label(scrollable_frame, text="\nRecursos:", font=("Arial", 12, "bold"), bg="#f0f0f0").pack(anchor="w")
         for k, v in process_info["resources"].items():
             tk.Label(scrollable_frame, text=f"{k.upper()} ({len(v)})", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(

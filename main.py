@@ -6,7 +6,6 @@ Esse módulo apresenta a implementação da main, que inicializa e executa todo 
 
 from controller import Controller
 
-# Executa somente se esse programa é chamado diretamente na compilação
 if __name__ == "__main__":
 
     controller = Controller()

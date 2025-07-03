@@ -2,11 +2,9 @@ import ctypes
 import ctypes.util
 import time
 
-# Constantes do tipo de arquivo (dir, reg, etc.)
 DT_DIR = 4
 DT_REG = 8
 
-# Struct dirent
 class Dirent(ctypes.Structure):
     _fields_ = [
         ("d_ino", ctypes.c_ulong),
@@ -16,7 +14,6 @@ class Dirent(ctypes.Structure):
         ("d_name", ctypes.c_char * 256),
     ]
 
-# Struct stat (simplificada)
 class Stat(ctypes.Structure):
     _fields_ = [
         ("st_dev", ctypes.c_ulong),
@@ -39,7 +36,7 @@ class Stat(ctypes.Structure):
     ]
 
 class FileTree:
-    #Construtor
+
     def __init__(self):
         self.libc = ctypes.CDLL(ctypes.util.find_library("c"))
         self.opendir = self.libc.opendir
