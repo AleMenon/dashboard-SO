@@ -3,11 +3,10 @@ from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-"""
-Esta classe é responsável por construir e gerenciar todos os elementos da interface gráfica do dashboard.
-Ela organiza os gráficos, tabelas e outros widgets para exibir informações de monitoramento do sistema.
-"""
 class Interface(tk.Frame):
+    """
+    Classe do Dashboard — agora 100% adaptável a qualquer tela.
+    """
 
     def __init__(self, parent, controller, data_collector):
         super().__init__(parent, bg="#dcdcdc")
@@ -15,8 +14,11 @@ class Interface(tk.Frame):
         self.controller = controller
         self.data_collector = data_collector
 
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        # Configura grid principal
+        for i in range(3):
+            self.grid_columnconfigure(i, weight=1)
+        for i in range(5):
+            self.grid_rowconfigure(i, weight=1)
 
         self.cpu_chart_frame = None
         self.memory_chart_frame = None
@@ -24,6 +26,7 @@ class Interface(tk.Frame):
         self.memory_frame = None
         self.tablept_frame = None
         self.tablep_frame = None
+
         self.cpu_fig = None
         self.cpu_ax = None
         self.cpu_canvas = None
@@ -33,41 +36,29 @@ class Interface(tk.Frame):
         self.virtual_memory_fig = None
         self.virtual_memory_ax = None
         self.virtual_memory_canvas = None
+
         self.memory_tree = None
+        self.static_tree = None
         self.tablept_tree = None
         self.process_tree = None
-
         self.process_details_map = {}
-
-        #Configura o layout da grid para janela principal
-        for i in range(3):
-            self.grid_columnconfigure(i, weight=1)
-        for i in range(5):
-            self.grid_rowconfigure(i, weight=1)
 
         self.create_op_frame()
 
-    """
-    Cria e posiciona o frame que contém o título principal "Sistema Operacional"
-    na parte superior da janela do dashboard.
-    """
     def create_op_frame(self):
         op_frame = tk.Frame(self, bd=2, relief="groove", padx=10, pady=10)
-        op_frame.grid(row=0, column=0, columnspan=3, sticky="new", padx=50, pady=10)
+        op_frame.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=50, pady=10)
 
         op_frame.grid_columnconfigure(0, weight=1)
         op_frame.grid_columnconfigure(1, weight=0)
 
         label = tk.Label(op_frame, text="Sistema Operacional", font=("Arial", 16), fg="black")
-        label.pack(anchor="center")
+        label.grid(row=0, column=0, sticky="w")
 
         switch_btn = tk.Button(op_frame, text="Arquivos",
                                command=lambda: self.controller.show_frame("FileFrame"))
-        switch_btn.pack(side="right")
+        switch_btn.grid(row=0, column=1, sticky="e")
 
-    """
-    Cria ou atualiza um gráfico de pizza que exibe o status de uso da memória RAM (livre vs. usada).
-    """
     def pie_chart_memory(self, data_memory):
         data_percent = data_memory["memory_free_percent"]
 
@@ -80,16 +71,13 @@ class Interface(tk.Frame):
             self.memory_canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
 
         self.memory_ax.clear()
-        labels = ['Livre', 'Usado']
-        size_percent = [data_percent, 100 - data_percent]
-        colors = ['green', 'red']
-        self.memory_ax.pie(size_percent, labels=labels, colors=colors, autopct='%1.1f%%')
+        self.memory_ax.pie([data_percent, 100 - data_percent],
+                           labels=['Livre', 'Usado'],
+                           colors=['green', 'red'],
+                           autopct='%1.1f%%')
         self.memory_ax.set_title("Status da Memória")
         self.memory_canvas.draw()
 
-    """
-    Cria ou atualiza um gráfico de pizza que exibe o status de uso da memória virtual (livre vs. usada).
-    """
     def pie_chart_virtual_memory(self, data_virtual_memory):
         data_percent = data_virtual_memory["vmem_free_percent"]
 
@@ -102,16 +90,13 @@ class Interface(tk.Frame):
             self.virtual_memory_canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
 
         self.virtual_memory_ax.clear()
-        labels = ['livre', 'Usado']
-        size_percent = [data_percent, 100 - data_percent]
-        colors = ['green', 'red']
-        self.virtual_memory_ax.pie(size_percent, labels=labels, colors=colors, autopct='%1.1f%%')
+        self.virtual_memory_ax.pie([data_percent, 100 - data_percent],
+                                   labels=['Livre', 'Usado'],
+                                   colors=['green', 'red'],
+                                   autopct='%1.1f%%')
         self.virtual_memory_ax.set_title("Status da Memória Virtual")
         self.virtual_memory_canvas.draw()
 
-    """
-    Cria ou atualiza um gráfico de pizza que exibe o status de uso da CPU (ociosa vs. usada).
-    """
     def pie_chart_cpu(self, data_cpu):
         data_percent = data_cpu["cpu_idle_percent"]
 
@@ -124,48 +109,40 @@ class Interface(tk.Frame):
             self.cpu_canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
 
         self.cpu_ax.clear()
-        labels = ['Livre', 'Usado']
-        size_percent = [data_percent, 100.0 - data_percent]
-        colors = ['green', 'red']
-        self.cpu_ax.pie(size_percent, labels=labels, colors=colors, autopct='%1.1f%%')
+        self.cpu_ax.pie([data_percent, 100 - data_percent],
+                        labels=['Livre', 'Usado'],
+                        colors=['green', 'red'],
+                        autopct='%1.1f%%')
         self.cpu_ax.set_title("Status da CPU")
         self.cpu_canvas.draw()
 
-    """
-    Cria ou atualiza uma tabela que exibe informações dinâmicas de memória,
-    como memória livre, usada e memória virtual livre, em GB e porcentagem.
-    """
     def dinamic_data_table(self, memory_data):
         if self.memory_frame is None:
             self.memory_frame = tk.Frame(self, bg="#dcdcdc")
             self.memory_frame.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
 
+            self.memory_frame.grid_columnconfigure(0, weight=1)
+
             label = tk.Label(self.memory_frame, text="Informações Dinâmicas", font=("Arial", 14, "bold"), bg="#dcdcdc")
-            label.grid(row=0, column=0, pady=(0, 5), sticky="w")
+            label.grid(row=0, column=0, sticky="w")
 
             columns = ("Info", "Gb", "Porcentagem")
             self.memory_tree = ttk.Treeview(self.memory_frame, columns=columns, show='headings', height=3)
             self.memory_tree.grid(row=1, column=0, sticky="nsew")
 
-            self.memory_tree.heading("Info", text=" ")
-            self.memory_tree.heading("Gb", text="GB")
-            self.memory_tree.heading("Porcentagem", text="PORCENTAGEM")
+            for col in columns:
+                self.memory_tree.heading(col, text=col)
+                self.memory_tree.column(col, anchor="center", stretch=True)
 
-            self.memory_tree.column("Info", anchor="w", stretch=True)
-            self.memory_tree.column("Gb", anchor="center", stretch=True)
-            self.memory_tree.column("Porcentagem", anchor="center", stretch=True)
             self.memory_frame.bind("<Configure>", self.resize_memory_columns)
 
-        # Atualiza os dados da tabela
-        # Primeiro limpa os itens antigos
         for item in self.memory_tree.get_children():
             self.memory_tree.delete(item)
 
-        # Depois insere os novos dados
         rows = [
             ("Memória Livre", memory_data["memory_free"], memory_data["memory_free_percent"]),
             ("Memória Usada", memory_data["memory_usage"], memory_data["memory_usage_percent"]),
-            ("memória Virtual Livre", memory_data["vmem_free"], memory_data["vmem_free_percent"]),
+            ("Memória Virtual Livre", memory_data["vmem_free"], memory_data["vmem_free_percent"]),
         ]
 
         for row in rows:
@@ -173,36 +150,28 @@ class Interface(tk.Frame):
 
     def resize_memory_columns(self, event):
         total_width = event.width
-        self.memory_tree.column("Info", width=int(total_width * 0.5))
-        self.memory_tree.column("Gb", width=int(total_width * 0.25))
-        self.memory_tree.column("Porcentagem", width=int(total_width * 0.25))
+        self.memory_tree.column("Info", width=max(int(total_width * 0.5), 80))
+        self.memory_tree.column("Gb", width=max(int(total_width * 0.25), 50))
+        self.memory_tree.column("Porcentagem", width=max(int(total_width * 0.25), 50))
 
-    """
-    Cria uma tabela que exibe informações estáticas de memória, como memória total
-    e memória virtual total. Esta tabela é criada apenas uma vez, já que seus dados são estáticos.
-    """
     def static_data_table(self, static_data):
-
         static_data_frame = tk.Frame(self, bg="#dcdcdc")
         static_data_frame.grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
 
+        static_data_frame.grid_columnconfigure(0, weight=1)
+
         label = tk.Label(static_data_frame, text="Informações Estáticas", font=("Arial", 14, "bold"), bg="#dcdcdc")
-        label.grid(row=0, column=0, pady=(0, 5), sticky="w")
+        label.grid(row=0, column=0, sticky="w")
 
         columns = ("Info", "Gb", "Porcentagem")
         tree = ttk.Treeview(static_data_frame, columns=columns, show='headings', height=3)
         tree.grid(row=1, column=0, sticky="nsew")
 
-        tree.heading("Info", text=" ")
-        tree.heading("Gb", text="GB")
-        tree.heading("Porcentagem", text="PORCENTAGEM")
+        for col in columns:
+            tree.heading(col, text=col)
+            tree.column(col, anchor="center", stretch=True)
 
-        tree.column("Info", anchor="w", stretch=True)
-        tree.column("Gb", anchor="center", stretch=True)
-        tree.column("Porcentagem", anchor="center", stretch=True)
-
-        self.static_tree = tree  # Salva como atributo para usar no resize
-
+        self.static_tree = tree
         static_data_frame.bind("<Configure>", self.resize_static_columns)
 
         rows = [
@@ -216,39 +185,33 @@ class Interface(tk.Frame):
 
     def resize_static_columns(self, event):
         total_width = event.width
-        self.static_tree.column("Info", width=int(total_width * 0.5))
-        self.static_tree.column("Gb", width=int(total_width * 0.25))
-        self.static_tree.column("Porcentagem", width=int(total_width * 0.25))
+        self.static_tree.column("Info", width=max(int(total_width * 0.5), 80))
+        self.static_tree.column("Gb", width=max(int(total_width * 0.25), 50))
+        self.static_tree.column("Porcentagem", width=max(int(total_width * 0.25), 50))
 
-    """
-    Cria ou atualiza uma tabela com o número total de processos e threads em execução.
-    """
     def show_process_and_threads_table(self, process_threads_data, n_threads):
         if self.tablept_frame is None:
             self.tablept_frame = tk.Frame(self, bg="#dcdcdc")
             self.tablept_frame.grid(row=2, column=2, padx=10, pady=10, sticky="nsew")
 
+            self.tablept_frame.grid_columnconfigure(0, weight=1)
+
             label = tk.Label(self.tablept_frame, text="Processos X Threads", font=("Arial", 14, "bold"), bg="#dcdcdc")
-            label.grid(row=0, column=0, pady=(0, 5), sticky="w")
+            label.grid(row=0, column=0, sticky="w")
 
             columns = ("Info", "Números")
             self.tablept_tree = ttk.Treeview(self.tablept_frame, columns=columns, show='headings', height=2)
             self.tablept_tree.grid(row=1, column=0, sticky="nsew")
 
-            self.tablept_tree.heading("Info", text=" ")
-            self.tablept_tree.heading("Números", text="NÚMEROS")
+            for col in columns:
+                self.tablept_tree.heading(col, text=col)
+                self.tablept_tree.column(col, anchor="center", stretch=True)
 
-            self.tablept_tree.column("Info", anchor="w", stretch=True)
-            self.tablept_tree.column("Números", anchor="center", stretch=True)
-
-            # 🔑 Bind do evento de resize
             self.tablept_frame.bind("<Configure>", self.resize_tablept_columns)
 
-        # Limpa os dados antigos
         for item in self.tablept_tree.get_children():
             self.tablept_tree.delete(item)
 
-        # Insere os novos dados
         rows = [
             ("Processos", len(process_threads_data)),
             ("Threads", n_threads),
@@ -259,25 +222,21 @@ class Interface(tk.Frame):
 
     def resize_tablept_columns(self, event):
         total_width = event.width
-        self.tablept_tree.column("Info", width=int(total_width * 0.7))
-        self.tablept_tree.column("Números", width=int(total_width * 0.3))
-
-    """
-    Cria ou atualiza uma tabela detalhada listando todos os processos em
-    execução com informações como ID, nome, usuário, uso de memória, etc.
-    """
+        self.tablept_tree.column("Info", width=max(int(total_width * 0.7), 80))
+        self.tablept_tree.column("Números", width=max(int(total_width * 0.3), 50))
 
     def show_process_table(self, processes_data):
         if self.tablep_frame is None:
             self.tablep_frame = tk.Frame(self, bg="#dcdcdc")
             self.tablep_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
-            label = tk.Label(self.tablep_frame, text="Informações dos Processos",
-                             font=("Arial", 12, "bold"), bg="#dcdcdc")
-            label.grid(row=0, column=0, pady=(10, 5), sticky="w")
+            label = tk.Label(self.tablep_frame, text="Informações dos Processos", font=("Arial", 12, "bold"), bg="#dcdcdc")
+            label.grid(row=0, column=0, sticky="w")
 
             inner_frame = tk.Frame(self.tablep_frame)
             inner_frame.grid(row=1, column=0, sticky="nsew")
+            inner_frame.grid_columnconfigure(0, weight=1)
+            inner_frame.grid_rowconfigure(0, weight=1)
 
             scrollbar = tk.Scrollbar(inner_frame)
             scrollbar.pack(side="right", fill="y")
@@ -287,7 +246,6 @@ class Interface(tk.Frame):
                 "Memória Virtual Usada", "Stack", "Heap", "Data", "Número de Threads"
             )
 
-            # 🔑 Agora usamos proporções em vez de pixels fixos
             self.process_column_ratios = {
                 "ID do Processo": 0.12,
                 "Nome": 0.15,
@@ -305,23 +263,19 @@ class Interface(tk.Frame):
 
             for col in columns:
                 self.process_tree.heading(col, text=col.upper())
-                self.process_tree.column(col, anchor="w", stretch=True)  # ✅ stretch=True para ser flexível
+                self.process_tree.column(col, anchor="w", stretch=True)
 
             self.process_tree.pack(fill="both", expand=True)
             scrollbar.config(command=self.process_tree.yview)
 
             self.process_tree.bind("<Double-1>", self.on_process_click)
 
-            # 🔑 Bind para redimensionar colunas dinamicamente
             self.tablep_frame.bind("<Configure>", self.resize_process_columns)
 
-        # Atualiza os dados da tabela sem recriá-la
         if self.process_tree and self.process_tree.winfo_exists():
-            # Limpa linhas antigas
             for item in self.process_tree.get_children():
                 self.process_tree.delete(item)
 
-            # Adiciona os novos dados
             for process in processes_data:
                 item_id = self.process_tree.insert("", "end", values=(
                     process["process_id"],
@@ -343,13 +297,7 @@ class Interface(tk.Frame):
     def resize_process_columns(self, event):
         total_width = event.width
         for col, ratio in self.process_column_ratios.items():
-            self.process_tree.column(col, width=int(total_width * ratio))
-
-    """
-    Manipulador do evento de clique duplo em um item da tabela de processos.
-    Quando o usuário clica duas vezes em uma linha, obtém os detalhes do processo
-    correspondente e abre uma janela (popup) com informações adicionais.
-    """
+            self.process_tree.column(col, width=max(int(total_width * ratio), 50))
 
     def on_process_click(self, event):
         selected_item = self.process_tree.focus()
@@ -364,12 +312,6 @@ class Interface(tk.Frame):
         process_info["resources"] = self.data_collector.get_process_resources(pid)
         self.abrir_popup(process_info)
 
-    """
-    Abre uma nova janela (popup) para exibir os detalhes completos do processo selecionado,
-    incluindo lista de threads associadas e recursos como arquivos abertos, bibliotecas,
-    sockets, entre outros.
-    """
-
     def abrir_popup(self, process_info):
         popup = tk.Toplevel(self)
         popup.title(f"Detalhes do Processo {process_info['name']} [PID {process_info['pid']}]")
@@ -383,50 +325,34 @@ class Interface(tk.Frame):
         scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
         scrollable_frame = tk.Frame(canvas, bg="#f0f0f0")
 
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-
+        scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
 
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # Mostrar threads
         tk.Label(scrollable_frame, text="Threads:", font=("Arial", 12, "bold"), bg="#f0f0f0").pack(anchor="w")
         for thread in process_info["thread_data"]:
             tk.Label(scrollable_frame, text=f"- {thread}", bg="#f0f0f0").pack(anchor="w", padx=20)
 
-        # Mostrar recursos
         tk.Label(scrollable_frame, text="\nRecursos:", font=("Arial", 12, "bold"), bg="#f0f0f0").pack(anchor="w")
         for k, v in process_info["resources"].items():
-            tk.Label(scrollable_frame, text=f"{k.upper()} ({len(v)})", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(
-                anchor="w")
+            tk.Label(scrollable_frame, text=f"{k.upper()} ({len(v)})", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(anchor="w")
             for item in v:
                 tk.Label(scrollable_frame, text=f" - {item}", bg="#f0f0f0").pack(anchor="w", padx=20)
 
         tk.Button(popup, text="Fechar", command=popup.destroy).pack(pady=10)
         canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1 * (e.delta / 120)), "units"))
-    """
-    Função de para atualizar o gráfico de status da CPU.
-    """
+
     def update_data_cpu(self, data):
         self.pie_chart_cpu(data)
 
-    """
-    Função de para atualizar os gráficos de status de memória
-    (RAM e virtual) e a tabela de informações dinâmicas de memória.
-    """
     def update_data_memory(self, data):
         self.pie_chart_memory(data)
         self.pie_chart_virtual_memory(data)
         self.dinamic_data_table(data)
 
-    """
-    Função de conveniência para atualizar as tabelas de processos (detalhada e resumida).
-    """
     def update_data_process(self, process, n_threads):
         self.show_process_table(process)
         self.show_process_and_threads_table(process, n_threads)

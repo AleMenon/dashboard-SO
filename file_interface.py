@@ -26,44 +26,65 @@ class FileInterface(tk.Frame):
     Cria o cabeçalho da interface, contendo o título "Sistemas de Arquivos"
     e um botão para voltar à tela principal do dashboard.
     """
-
     def create_header(self):
-
         op_frame = tk.Frame(self, bd=2, relief="groove", padx=10, pady=10)
-        op_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=50, pady=10)
+        op_frame.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=50, pady=10)
+
         op_frame.grid_columnconfigure(0, weight=1)
+        op_frame.grid_columnconfigure(1, weight=0)
 
         label = tk.Label(op_frame, text="Sistemas de Arquivos", font=("Arial", 16), fg="black")
-        label.pack(anchor="center")
+        label.grid(row=0, column=0, sticky="w")
 
         back_btn = tk.Button(op_frame, text="Voltar",
                              command=lambda: self.controller.show_frame("DashboardFrame"))
-        back_btn.pack(side="right")
+        back_btn.grid(row=0, column=1, sticky="e")
 
     """
     Cria a tabela principal que mostra os pontos de montagem dos sistemas de arquivos,
     juntamente com informações de capacidade total, espaço usado, espaço livre e porcentagem de uso.
     """
-
     def create_table(self):
         self.table_frame = tk.Frame(self, bg="#dcdcdc")
         self.table_frame.grid(row=1, column=0, columnspan=3, padx=50, pady=20, sticky="nsew")
 
+        self.table_frame.grid_columnconfigure(0, weight=1)
+        self.table_frame.grid_rowconfigure(0, weight=1)
+
         columns = ("Ponto de Montagem", "Total (GB)", "Usado (GB)", "Livre (GB)", "Uso (%)")
+
+        self.fs_column_ratios = {
+            "Ponto de Montagem": 0.35,
+            "Total (GB)": 0.15,
+            "Usado (GB)": 0.15,
+            "Livre (GB)": 0.15,
+            "Uso (%)": 0.20
+        }
 
         self.tree = ttk.Treeview(self.table_frame, columns=columns, show="headings", height=1)
 
         for col in columns:
             self.tree.heading(col, text=col)
-            self.tree.column(col, anchor="center", width=120)  # Adicionei width para melhor visualização
+            self.tree.column(col, anchor="center", stretch=True)
 
-        self.tree.pack(fill="x", expand=True)
+        self.tree.pack(fill="both", expand=True)
+
+        # Bind para resize seguro
+        self.table_frame.bind("<Configure>", self.resize_table_columns)
+
+    """
+    Ajusta as larguras das colunas proporcionalmente sempre que o Frame for redimensionado.
+    """
+    def resize_table_columns(self, event):
+        total_width = event.width
+        for col, ratio in self.fs_column_ratios.items():
+            col_width = max(int(total_width * ratio), 50)  # Protege contra width zero
+            self.tree.column(col, width=col_width)
 
     """
     Atualiza os dados exibidos na tabela com informações atualizadas
     dos sistemas de arquivos montados no sistema.
     """
-
     def refresh_table(self):
         mounts = self.fs_collector.get_mounts()
 
