@@ -51,6 +51,12 @@ class FileTree:
         self.readdir.restype = ctypes.POINTER(Dirent)
         self.stat.argtypes = [ctypes.c_char_p, ctypes.POINTER(Stat)]
 
+    """
+    Método responsável por converter a sequência de bits para as respectivas letras equivalentes às permissões do arquivo.
+
+    Returns: 
+        Perms: String
+    """
     def parse_perms(self, mode):
         perms = ""
         for who in [6, 3, 0]:  # user, group, other
@@ -59,9 +65,17 @@ class FileTree:
             perms += "x" if mode & (0o1 << who) else "-"
         return perms
 
+
+    """
+    Método responsável por listar os conteúdos do diretório
+
+    Returns: 
+        content_list: Lista de conteúdos do diretório
+    """
     def list_content(self, path):
         dir_p = self.opendir(path.encode())
 
+        # Se não for um diretório
         if not dir_p:
             return []
         
@@ -70,6 +84,7 @@ class FileTree:
         entry = self.readdir(dir_p)
         while entry:
             name = entry.contents.d_name.decode()
+            # Se o nome do elemento no diretório começar com .
             if name.startswith("."):
                 entry = self.readdir(dir_p)
                 continue
@@ -77,10 +92,12 @@ class FileTree:
             full_path = f"{path.rstrip('/')}/{name}"
             file_info = Stat()
 
+            # Verifica se o acesso ao conteúdo retornou algum erro
             if self.stat(full_path.encode(), ctypes.byref(file_info)) != 0:
                 entry = self.readdir(dir_p)
                 continue
 
+            # Coleta os dados do arquivo
             content = {
                 "name": name,
                 "type": "Diretório" if entry.contents.d_type == DT_DIR else "Arquivo",

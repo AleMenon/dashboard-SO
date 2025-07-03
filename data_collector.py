@@ -174,7 +174,13 @@ class DataCollector:
     # COLETA DE DADOS DOS PROCESSOS #
     #################################
 
-    # Função para resolver link simbólico
+
+    """
+    Responsável por lidar com links do sistema linux, usando a biblioteca ctypes e chamadas de sistema.
+
+    Returns:
+        String contendo informações do link
+    """
     def readlink(self, path, buffer_size=4096):
         buf = ctypes.create_string_buffer(buffer_size)
         path_bytes = str(path).encode('utf-8')
@@ -184,7 +190,14 @@ class DataCollector:
             raise OSError(errno, f"Erro ao ler link: {path}")
         return buf.value.decode()
 
+    """
+    Responsável por coletar os recursos de cada processo.
+
+    Returns:
+        resources: (type, list), String e lista respectivamente.
+    """
     def get_process_resources(self, pid):
+        # Cria o dicionário de recursos do processo
         fd_dir = Path(f"/proc/{pid}/fd")
         resources = {
             "arquivos": [],
@@ -196,6 +209,7 @@ class DataCollector:
         }
 
         try:
+            # Looping para ler os links e informações
             for fd_path in fd_dir.iterdir():
                 try:
                     target = self.readlink(fd_path)

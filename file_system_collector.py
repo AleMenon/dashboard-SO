@@ -26,12 +26,18 @@ class FileSystemCollector:
         self.statvfs = libc.statvfs
         self.statvfs.argtypes = [ctypes.c_char_p, ctypes.POINTER(Statvfs)]
 
+
+    """
+    Verifica os locais de montagem do disco.
+
+    Returns:
+        mounts: Lista com os discos e locais de montagem.
+    """
     def get_mounts(self):
         mounts = []
         with open("/proc/mounts", "r") as f:
             for line in f:
                 parts = line.split()
-                device = parts[0]
                 mountpoint = parts[1]
                 fs_type = parts[2]
                 # Ignora sistemas de arquivos virtuais
@@ -40,6 +46,13 @@ class FileSystemCollector:
                     #print(device)
         return mounts
 
+
+    """
+    Consegue o uso de cada disco.
+
+    Returns:
+        Sequência de várias informações em variáveis.
+    """
     def get_fs_usage(self, mountpoint):
         stats = Statvfs()
         result = self.statvfs(mountpoint.encode(), ctypes.pointer(stats))
